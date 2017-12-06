@@ -15,6 +15,8 @@
 package aggregate
 
 import (
+	"sync"
+
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
 
@@ -33,12 +35,32 @@ type Registry struct {
 // Controller aggregates data across different registries and monitors for changes
 type Controller struct {
 	registries []Registry
+
+	// Mutex guards services, serviceInstances and serviceInstanceLabels
+	mu  sync.RWMutex
+
+	// Canonical map of mesh service key to service references
+	services map[serviceKey]*model.Service
+
+	// Canonical map of mesh service instance keys to service instance references
+	serviceInstances map[serviceInstanceKey]*model.ServiceInstance
+
+	// A map that associates label names to label values and matching serviceKeySets 
+	serviceLabels map[string]serviceValueSet
+
+	// A map that associates label names to label values and matching serviceInstanceKeySets 
+	serviceInstancesLabels map[string]serviceInstanceValueSet
 }
 
 // NewController creates a new Aggregate controller
 func NewController() *Controller {
 	return &Controller{
 		registries: make([]Registry, 0),
+		mu: sync.RWMutex{},
+		services: make(map[serviceKey]*model.Service),
+		serviceInstances: make(map[serviceInstanceKey]*model.ServiceInstance),
+		serviceLabels:  make(map[string]serviceValueSet),
+		serviceInstancesLabels: make(map[string]serviceInstanceValueSet),
 	}
 }
 
