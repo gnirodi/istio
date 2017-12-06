@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
-    srcs = ["controller.go"],
+    srcs = [
+    	"controller.go",
+    	"registry_handler.go",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//pilot/model:go_default_library",
@@ -15,7 +18,10 @@ go_library(
 go_test(
     name = "go_default_test",
     size = "small",
-    srcs = ["controller_test.go"],
+    srcs = [
+    	"controller_test.go",
+    	"registry_handler_test.go",
+    ],
     library = ":go_default_library",
     deps = [
         "//pilot/model:go_default_library",

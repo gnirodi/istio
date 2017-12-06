@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	// Internal Labels used for xDS use only. These labels are never exposed in
-	// External xDS interfaces.
+	// Labels used for xDS internals use only. These labels are never exposed in
+	// external xDS interfaces.
 	labelXdsPrefix         = "config.istio.io/xds"
 	labelServicePrefix     = labelXdsPrefix + "Service."
 	labelServiceName       = labelServicePrefix + "name"
