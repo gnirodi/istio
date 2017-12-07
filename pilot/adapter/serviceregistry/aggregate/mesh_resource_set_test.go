@@ -1,7 +1,3 @@
-
-
-
-
 // Copyright 2017 Istio Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,5 +20,5 @@ import (
 )
 
 func TestRegistryHandler_HandleService(t *testing.T) {
-    fmt.Printf("Hello Registry Handler Test\n")
+	fmt.Printf("Hello Registry Handler Test\n")
 }

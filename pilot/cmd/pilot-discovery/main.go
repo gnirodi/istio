@@ -123,7 +123,7 @@ var (
 			}
 
 			configController := crd.NewController(configClient, flags.controllerOptions)
-			serviceControllers := aggregate.NewController()
+			serviceControllers := aggregate.NewMeshResourceView()
 			registered := make(map[platform.ServiceRegistry]bool)
 			for _, r := range flags.registries {
 				serviceRegistry := platform.ServiceRegistry(r)
