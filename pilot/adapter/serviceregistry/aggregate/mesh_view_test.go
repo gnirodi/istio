@@ -24,23 +24,23 @@ import (
 	"istio.io/istio/pilot/test/mock"
 )
 
-// MockController specifies a mock Controller for testing
-type MockController struct{}
+// MockMeshView specifies a mock MeshView for testing
+type MockMeshView struct{}
 
-func (c *MockController) AppendServiceHandler(f func(*model.Service, model.Event)) error {
+func (v *MockMeshView) AppendServiceHandler(f func(*model.Service, model.Event)) error {
 	return nil
 }
 
-func (c *MockController) AppendInstanceHandler(f func(*model.ServiceInstance, model.Event)) error {
+func (v *MockMeshView) AppendInstanceHandler(f func(*model.ServiceInstance, model.Event)) error {
 	return nil
 }
 
-func (c *MockController) Run(<-chan struct{}) {}
+func (v *MockMeshView) Run(<-chan struct{}) {}
 
 var discovery1 *mock.ServiceDiscovery
 var discovery2 *mock.ServiceDiscovery
 
-func buildMockController() *Controller {
+func buildMockMeshView() *MeshView {
 	discovery1 = mock.NewDiscovery(
 		map[string]*model.Service{
 			mock.HelloService.Hostname: mock.HelloService,
@@ -55,17 +55,17 @@ func buildMockController() *Controller {
 		Name:             platform.ServiceRegistry("mockAdapter1"),
 		ServiceDiscovery: discovery1,
 		ServiceAccounts:  discovery1,
-		Controller:       &MockController{},
+		MeshView:       &MockMeshView{},
 	}
 
 	registry2 := Registry{
 		Name:             platform.ServiceRegistry("mockAdapter2"),
 		ServiceDiscovery: discovery2,
 		ServiceAccounts:  discovery2,
-		Controller:       &MockController{},
+		MeshView:       &MockMeshView{},
 	}
 
-	ctls := NewController()
+	ctls := NewMeshView()
 	ctls.AddRegistry(registry1)
 	ctls.AddRegistry(registry2)
 
@@ -73,21 +73,21 @@ func buildMockController() *Controller {
 }
 
 func TestServicesError(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	discovery1.ServicesError = errors.New("mock Services() error")
 
-	// List Services from aggregate controller
-	_, err := aggregateCtl.Services()
+	// List Services from aggregate MeshView
+	_, err := meshView.Services()
 	if err == nil {
-		t.Fatal("Aggregate controller should return error if one discovery client experience error")
+		t.Fatal("Aggregate MeshView should return error if one discovery client experience error")
 	}
 }
 
 func TestServices(t *testing.T) {
-	aggregateCtl := buildMockController()
-	// List Services from aggregate controller
-	services, err := aggregateCtl.Services()
+	meshView := buildMockMeshView()
+	// List Services from aggregate MeshView
+	services, err := meshView.Services()
 
 	// Set up ground truth hostname values
 	serviceMap := map[string]bool{
@@ -114,10 +114,10 @@ func TestServices(t *testing.T) {
 }
 
 func TestGetService(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	// Get service from mockAdapter1
-	svc, err := aggregateCtl.GetService(mock.HelloService.Hostname)
+	svc, err := meshView.GetService(mock.HelloService.Hostname)
 	if err != nil {
 		t.Fatalf("GetService() encountered unexpected error: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestGetService(t *testing.T) {
 	}
 
 	// Get service from mockAdapter2
-	svc, err = aggregateCtl.GetService(mock.WorldService.Hostname)
+	svc, err = meshView.GetService(mock.WorldService.Hostname)
 	if err != nil {
 		t.Fatalf("GetService() encountered unexpected error: %v", err)
 	}
@@ -142,15 +142,15 @@ func TestGetService(t *testing.T) {
 }
 
 func TestGetServiceError(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	discovery1.GetServiceError = errors.New("mock GetService() error")
 
 	// Get service from client with error
-	svc, err := aggregateCtl.GetService(mock.HelloService.Hostname)
+	svc, err := meshView.GetService(mock.HelloService.Hostname)
 	if err == nil {
 		fmt.Println(svc)
-		t.Fatal("Aggregate controller should return error if one discovery client experiences " +
+		t.Fatal("Aggregate MeshView should return error if one discovery client experiences " +
 			"error and no service is found")
 	}
 	if svc != nil {
@@ -158,9 +158,9 @@ func TestGetServiceError(t *testing.T) {
 	}
 
 	// Get service from client without error
-	svc, err = aggregateCtl.GetService(mock.WorldService.Hostname)
+	svc, err = meshView.GetService(mock.WorldService.Hostname)
 	if err != nil {
-		t.Fatal("Aggregate controller should not return error if service is found")
+		t.Fatal("Aggregate MeshView should not return error if service is found")
 	}
 	if svc == nil {
 		t.Fatal("Fail to get service")
@@ -171,10 +171,10 @@ func TestGetServiceError(t *testing.T) {
 }
 
 func TestHostInstances(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	// Get Instances from mockAdapter1
-	instances, err := aggregateCtl.HostInstances(map[string]bool{mock.HelloInstanceV0: true})
+	instances, err := meshView.HostInstances(map[string]bool{mock.HelloInstanceV0: true})
 	if err != nil {
 		t.Fatalf("HostInstances() encountered unexpected error: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestHostInstances(t *testing.T) {
 	}
 
 	// Get Instances from mockAdapter2
-	instances, err = aggregateCtl.HostInstances(map[string]bool{mock.MakeIP(mock.WorldService, 1): true})
+	instances, err = meshView.HostInstances(map[string]bool{mock.MakeIP(mock.WorldService, 1): true})
 	if err != nil {
 		t.Fatalf("HostInstances() encountered unexpected error: %v", err)
 	}
@@ -203,14 +203,14 @@ func TestHostInstances(t *testing.T) {
 }
 
 func TestHostInstancesError(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	discovery1.HostInstancesError = errors.New("mock HostInstances() error")
 
 	// Get Instances from client with error
-	instances, err := aggregateCtl.HostInstances(map[string]bool{mock.HelloInstanceV0: true})
+	instances, err := meshView.HostInstances(map[string]bool{mock.HelloInstanceV0: true})
 	if err == nil {
-		t.Fatal("Aggregate controller should return error if one discovery client experiences " +
+		t.Fatal("Aggregate MeshView should return error if one discovery client experiences " +
 			"error and no instances are found")
 	}
 	if len(instances) != 0 {
@@ -218,9 +218,9 @@ func TestHostInstancesError(t *testing.T) {
 	}
 
 	// Get Instances from client without error
-	instances, err = aggregateCtl.HostInstances(map[string]bool{mock.MakeIP(mock.WorldService, 1): true})
+	instances, err = meshView.HostInstances(map[string]bool{mock.MakeIP(mock.WorldService, 1): true})
 	if err != nil {
-		t.Fatal("Aggregate controller should not return error if instances are found")
+		t.Fatal("Aggregate MeshView should not return error if instances are found")
 	}
 	if len(instances) != 5 {
 		t.Fatalf("Returned HostInstances' amount %d is not correct", len(instances))
@@ -233,17 +233,17 @@ func TestHostInstancesError(t *testing.T) {
 }
 
 func TestInstances(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	// Get Instances from mockAdapter1
-	instances, err := aggregateCtl.Instances(mock.HelloService.Hostname,
+	instances, err := meshView.Instances(mock.HelloService.Hostname,
 		[]string{mock.PortHTTP.Name},
 		model.LabelsCollection{})
 	if err != nil {
 		t.Fatalf("Instances() encountered unexpected error: %v", err)
 	}
 	if len(instances) != 2 {
-		t.Fatal("Returned wrong number of instances from controller")
+		t.Fatal("Returned wrong number of instances from MeshView")
 	}
 	for _, instance := range instances {
 		if instance.Service.Hostname != mock.HelloService.Hostname {
@@ -255,14 +255,14 @@ func TestInstances(t *testing.T) {
 	}
 
 	// Get Instances from mockAdapter2
-	instances, err = aggregateCtl.Instances(mock.WorldService.Hostname,
+	instances, err = meshView.Instances(mock.WorldService.Hostname,
 		[]string{mock.PortHTTP.Name},
 		model.LabelsCollection{})
 	if err != nil {
 		t.Fatalf("Instances() encountered unexpected error: %v", err)
 	}
 	if len(instances) != 2 {
-		t.Fatal("Returned wrong number of instances from controller")
+		t.Fatal("Returned wrong number of instances from MeshView")
 	}
 	for _, instance := range instances {
 		if instance.Service.Hostname != mock.WorldService.Hostname {
@@ -275,31 +275,31 @@ func TestInstances(t *testing.T) {
 }
 
 func TestInstancesError(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	discovery1.InstancesError = errors.New("mock Instances() error")
 
 	// Get Instances from client with error
-	instances, err := aggregateCtl.Instances(mock.HelloService.Hostname,
+	instances, err := meshView.Instances(mock.HelloService.Hostname,
 		[]string{mock.PortHTTP.Name},
 		model.LabelsCollection{})
 	if err == nil {
-		t.Fatal("Aggregate controller should return error if one discovery client experiences " +
+		t.Fatal("Aggregate MeshView should return error if one discovery client experiences " +
 			"error and no instances are found")
 	}
 	if len(instances) != 0 {
-		t.Fatal("Returned wrong number of instances from controller")
+		t.Fatal("Returned wrong number of instances from MeshView")
 	}
 
 	// Get Instances from client without error
-	instances, err = aggregateCtl.Instances(mock.WorldService.Hostname,
+	instances, err = meshView.Instances(mock.WorldService.Hostname,
 		[]string{mock.PortHTTP.Name},
 		model.LabelsCollection{})
 	if err != nil {
 		t.Fatalf("Instances() should not return error is instances are found: %v", err)
 	}
 	if len(instances) != 2 {
-		t.Fatal("Returned wrong number of instances from controller")
+		t.Fatal("Returned wrong number of instances from MeshView")
 	}
 	for _, instance := range instances {
 		if instance.Service.Hostname != mock.WorldService.Hostname {
@@ -312,10 +312,10 @@ func TestInstancesError(t *testing.T) {
 }
 
 func TestGetIstioServiceAccounts(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 
 	// Get accounts from mockAdapter1
-	accounts := aggregateCtl.GetIstioServiceAccounts(mock.HelloService.Hostname, []string{})
+	accounts := meshView.GetIstioServiceAccounts(mock.HelloService.Hostname, []string{})
 	expected := []string{}
 
 	if len(accounts) != len(expected) {
@@ -329,7 +329,7 @@ func TestGetIstioServiceAccounts(t *testing.T) {
 	}
 
 	// Get accounts from mockAdapter2
-	accounts = aggregateCtl.GetIstioServiceAccounts(mock.WorldService.Hostname, []string{})
+	accounts = meshView.GetIstioServiceAccounts(mock.WorldService.Hostname, []string{})
 	expected = []string{
 		"spiffe://cluster.local/ns/default/sa/serviceaccount1",
 		"spiffe://cluster.local/ns/default/sa/serviceaccount2",
@@ -347,7 +347,7 @@ func TestGetIstioServiceAccounts(t *testing.T) {
 }
 
 func TestManagementPorts(t *testing.T) {
-	aggregateCtl := buildMockController()
+	meshView := buildMockMeshView()
 	expected := model.PortList{{
 		Name:     "http",
 		Port:     3333,
@@ -359,9 +359,9 @@ func TestManagementPorts(t *testing.T) {
 	}}
 
 	// Get management ports from mockAdapter1
-	ports := aggregateCtl.ManagementPorts(mock.HelloInstanceV0)
+	ports := meshView.ManagementPorts(mock.HelloInstanceV0)
 	if len(ports) != 2 {
-		t.Fatal("Returned wrong number of ports from controller")
+		t.Fatal("Returned wrong number of ports from MeshView")
 	}
 	for i := 0; i < len(ports); i++ {
 		if ports[i].Name != expected[i].Name || ports[i].Port != expected[i].Port ||
@@ -371,9 +371,9 @@ func TestManagementPorts(t *testing.T) {
 	}
 
 	// Get management ports from mockAdapter2
-	ports = aggregateCtl.ManagementPorts(mock.MakeIP(mock.WorldService, 0))
+	ports = meshView.ManagementPorts(mock.MakeIP(mock.WorldService, 0))
 	if len(ports) != len(expected) {
-		t.Fatal("Returned wrong number of ports from controller")
+		t.Fatal("Returned wrong number of ports from MeshView")
 	}
 	for i := 0; i < len(ports); i++ {
 		if ports[i].Name != expected[i].Name || ports[i].Port != expected[i].Port ||

@@ -3,8 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
-    	"controller.go",
-    	"registry_handler.go",
+        "mesh_view.go",
+        "mesh_resource_set.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -19,8 +19,8 @@ go_test(
     name = "go_default_test",
     size = "small",
     srcs = [
-    	"controller_test.go",
-    	"registry_handler_test.go",
+        "mesh_view_test.go",
+        "mesh_resource_set_test.go",
     ],
     library = ":go_default_library",
     deps = [
