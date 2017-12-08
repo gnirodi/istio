@@ -16,6 +16,8 @@ package aggregate
 
 import (
 	"math"
+
+	"istio.io/istio/pilot/model"
 )
 
 // Key used to track resources like service or service instance objects maintained by a registry
@@ -28,13 +30,66 @@ type resourceKeySet map[resourceKey]bool
 // A map of the value of a label to the resource key
 type labelValueKeysMap map[string]resourceKeySet
 
-// A map of a label name to label values and their associated 
+// A map of a label name to label values and their associated
 type nameValueKeysMap map[string]labelValueKeysMap
 
+type resourceLabel struct {
+	name  string
+	value *string
+}
+
+type resourceLabels []resourceLabel
+
+func resourceLabelsFromModelLabels(lc model.Labels) resourceLabels {
+	rl := make(resourceLabels, len(lc))
+	i := 0
+	for k, v := range lc {
+		rl[i] = resourceLabel{k, &v}
+		i++
+	}
+	return rl
+}
+
+func resourceLabelsForNameValue(name, value string) resourceLabels {
+	rl := make(resourceLabels, 1)
+	rl[0] = resourceLabel{name, &value}
+	return rl
+}
+
+func resourceLabelsForName(name string) resourceLabels {
+	rl := make(resourceLabels, 1)
+	rl[0] = resourceLabel{name, nil}
+	return rl
+}
+
+func resourceLabelsForValues(name string, values []string) resourceLabels {
+	rl := make(resourceLabels, len(values))
+	i := 0
+	for _, v := range values {
+		rl[i] = resourceLabel{name, &v}
+		i++
+	}
+	return rl
+}
+
+func resourceLabelsForValueSet(name string, values map[string]bool) resourceLabels {
+	rl := make(resourceLabels, len(values))
+	i := 0
+	for v := range values {
+		rl[i] = resourceLabel{name, &v}
+		i++
+	}
+	return rl
+}
+
+func (rl resourceLabels) appendNameValue(name, value string) {
+	rl = append(rl, resourceLabel{name, &value})
+}
+
 func (ks *resourceKeySet) appendFrom(other *resourceKeySet) {
-    for k, _ := range *other {
-        (*ks)[k] = true
-    }
+	for k := range *other {
+		(*ks)[k] = true
+	}
 }
 
 func (nameValueKeysMap *nameValueKeysMap) addLabel(k resourceKey, labelName, labelValue string) {
@@ -64,69 +119,70 @@ func (nameValueKeysMap *nameValueKeysMap) deleteLabel(k resourceKey, labelName, 
 		delete(keySet, k)
 	}
 	if len(keySet) > 0 {
-	    return
+		return
 	}
-    delete(valueKeySetMap, labelValue)
+	delete(valueKeySetMap, labelValue)
 	if len(valueKeySetMap) > 0 {
-	    return
+		return
 	}
 	delete(*nameValueKeysMap, labelName)
 }
 
-func (nameValueKeysMap *nameValueKeysMap) getResourceKeysMatching(labels map[string]*string) resourceKeySet {
-    type matchingSet struct {
-        labelName 	string
-        labelValue *string
-        keySet	  	resourceKeySet
-    }
-    countLabels := len(labels)
-    // Note: 0th index has the smallest keySet
-    matchingSets := make([]matchingSet, countLabels)
-    smallestSetLen := math.MaxInt32
-    setIdx := 0
-    for k, v := range labels {
-        valueKeysetMap := (*nameValueKeysMap)[k]
-        if len(valueKeysetMap) == 0 {
-            // Nothing matched at least one label name
-            return resourceKeySet{}
-        }
-        matchingSets[setIdx] = matchingSet{k, v, resourceKeySet{}}
-        if v != nil {
-            matchingSets[setIdx].keySet = valueKeysetMap[*v]
-        } else {
-            // We get everything that matches the label name
-            // irrespective of the value
-            for _, resourceKeySet := range valueKeysetMap {
-                matchingSets[setIdx].keySet.appendFrom(&resourceKeySet)
-            }
-        }
-        lenKeySet := len(matchingSets[setIdx].keySet)
-        if lenKeySet == 0 {
-            // There were no service keys for this label name
-            return resourceKeySet{}
-        }
-        if lenKeySet < smallestSetLen {
-            smallestSetLen = lenKeySet
-            if setIdx > 0 {
-                swappedMatchingSet := matchingSets[0]
-                matchingSets[0] = matchingSets[setIdx]
-                matchingSets[setIdx] = swappedMatchingSet
-            }
-        }
-    }
-    finalKeySet := matchingSets[setIdx].keySet
-    if countLabels > 1 {
-        finalKeySet = make(resourceKeySet)
-        finalKeySet.appendFrom(&matchingSets[setIdx].keySet)
-        for k := range finalKeySet {
-            for setIdx := 1; setIdx < countLabels; setIdx++ {
-                _, found := matchingSets[setIdx].keySet[k]
-                if !found {
-                    delete(finalKeySet, k)
-                    break
-                }
-            } 
-        }
-    }
-    return finalKeySet
-} 
+func (nameValueKeysMap *nameValueKeysMap) getResourceKeysMatching(labels resourceLabels) resourceKeySet {
+	type matchingSet struct {
+		labelName  string
+		labelValue *string
+		keySet     resourceKeySet
+	}
+	countLabels := len(labels)
+	// Note: 0th index has the smallest keySet
+	matchingSets := make([]matchingSet, countLabels)
+	smallestSetLen := math.MaxInt32
+	setIdx := 0
+	for _, l := range labels {
+		k, v := l.name, l.value
+		valueKeysetMap := (*nameValueKeysMap)[k]
+		if len(valueKeysetMap) == 0 {
+			// Nothing matched at least one label name
+			return resourceKeySet{}
+		}
+		matchingSets[setIdx] = matchingSet{k, v, resourceKeySet{}}
+		if v != nil {
+			matchingSets[setIdx].keySet = valueKeysetMap[*v]
+		} else {
+			// We get everything that matches the label name
+			// irrespective of the value
+			for _, resourceKeySet := range valueKeysetMap {
+				matchingSets[setIdx].keySet.appendFrom(&resourceKeySet)
+			}
+		}
+		lenKeySet := len(matchingSets[setIdx].keySet)
+		if lenKeySet == 0 {
+			// There were no service keys for this label name
+			return resourceKeySet{}
+		}
+		if lenKeySet < smallestSetLen {
+			smallestSetLen = lenKeySet
+			if setIdx > 0 {
+				swappedMatchingSet := matchingSets[0]
+				matchingSets[0] = matchingSets[setIdx]
+				matchingSets[setIdx] = swappedMatchingSet
+			}
+		}
+	}
+	finalKeySet := matchingSets[setIdx].keySet
+	if countLabels > 1 {
+		finalKeySet = make(resourceKeySet)
+		finalKeySet.appendFrom(&matchingSets[setIdx].keySet)
+		for k := range finalKeySet {
+			for setIdx := 1; setIdx < countLabels; setIdx++ {
+				_, found := matchingSets[setIdx].keySet[k]
+				if !found {
+					delete(finalKeySet, k)
+					break
+				}
+			}
+		}
+	}
+	return finalKeySet
+}
