@@ -21,7 +21,6 @@ import (
 	"sync"
 
 	"github.com/golang/glog"
-	multierror "github.com/hashicorp/go-multierror"
 
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform"
@@ -49,7 +48,7 @@ type Registry struct {
 	model.ServiceDiscovery
 	model.ServiceAccounts
 	// The service mesh view that this registry belongs to
-    meshView *MeshResourceView
+	meshView *MeshResourceView
 }
 
 // MeshResourceView is an aggregated store for resources sourced from various registries
@@ -70,23 +69,23 @@ type MeshResourceView struct {
 
 	// A reverse map that associates label names to label values and their associated service instance resource keys
 	serviceInstanceLabels nameValueKeysMap
-	
+
 	// Cache notifier for Service resources
-    serviceHandler func(*model.Service, model.Event)	
+	serviceHandler func(*model.Service, model.Event)
 
 	// Cache notifier for Service Instance resources
-    serviceInstanceHandler func(*model.ServiceInstance, model.Event)	
+	serviceInstanceHandler func(*model.ServiceInstance, model.Event)
 }
 
-// NewMeshResourceView creates an aggregated store for resources sourced from various registries 
+// NewMeshResourceView creates an aggregated store for resources sourced from various registries
 func NewMeshResourceView() *MeshResourceView {
 	return &MeshResourceView{
-		registries:             make([]Registry, 0),
-		mu:                     sync.RWMutex{},
-		services:               make(map[resourceKey]*model.Service),
-		serviceInstances:       make(map[resourceKey]*model.ServiceInstance),
-		serviceLabels:          make(nameValueKeysMap),
-		serviceInstanceLabels:  make(nameValueKeysMap),
+		registries:            make([]Registry, 0),
+		mu:                    sync.RWMutex{},
+		services:              make(map[resourceKey]*model.Service),
+		serviceInstances:      make(map[resourceKey]*model.ServiceInstance),
+		serviceLabels:         make(nameValueKeysMap),
+		serviceInstanceLabels: make(nameValueKeysMap),
 	}
 }
 
@@ -127,40 +126,26 @@ func (r *Registry) HandleServiceInstance(i *model.ServiceInstance, e model.Event
 
 // AddRegistry adds registries into the aggregated MeshResourceView
 func (v *MeshResourceView) AddRegistry(registry Registry) {
+	// Create bidirectional associations between the meshView and
+	// the registry being added
+	registry.meshView = v
 	v.registries = append(v.registries, registry)
 }
 
 // Services lists services from all platforms
 func (v *MeshResourceView) Services() ([]*model.Service, error) {
-	services := make([]*model.Service, 0)
-	var errs error
-	for _, r := range v.registries {
-		svcs, err := r.Services()
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			services = append(services, svcs...)
-		}
-	}
-	return services, errs
+	lbls := resourceLabelsForName(labelServiceName)
+	return v.serviceByLabels(lbls), nil
 }
 
 // GetService retrieves a service by hostname if exists
 func (v *MeshResourceView) GetService(hostname string) (*model.Service, error) {
-	var errs error
-	for _, r := range v.registries {
-		service, err := r.GetService(hostname)
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else if service != nil {
-			if errs != nil {
-				glog.Warningf("GetService() found match but encountered an error: %v", errs)
-			}
-			return service, nil
-		}
-
+	lbls := resourceLabelsForNameValue(labelServiceName, hostname)
+	svcs := v.serviceByLabels(lbls)
+	if len(svcs) > 0 {
+		return svcs[0], nil
 	}
-	return nil, errs
+	return nil, nil
 }
 
 // ManagementPorts retrieves set of health check ports by instance IP
@@ -178,44 +163,23 @@ func (v *MeshResourceView) ManagementPorts(addr string) model.PortList {
 // any of the supplied labels. All instances match an empty label list.
 func (v *MeshResourceView) Instances(hostname string, ports []string,
 	labels model.LabelsCollection) ([]*model.ServiceInstance, error) {
-	var instances []*model.ServiceInstance
-	var errs error
-	for _, r := range v.registries {
-		var err error
-		instances, err = r.Instances(hostname, ports, labels)
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else if len(instances) > 0 {
-			if errs != nil {
-				glog.Warningf("Instances() found match but encountered an error: %v", errs)
-			}
-			return instances, nil
+	hostPortLbls := resourceLabelsForValues(labelInstancePort, ports)
+	hostPortLbls.appendNameValue(labelServiceName, hostname)
+	for _, lblset := range labels {
+		lbls := resourceLabelsFromModelLabels(lblset)
+		lbls = append(lbls, hostPortLbls...)
+		out := v.serviceInstancesByLabels(lbls)
+		if len(out) > 0 {
+			return out, nil
 		}
 	}
-	return instances, errs
+	return nil, nil
 }
 
 // HostInstances lists service instances for a given set of IPv4 addresses.
 func (v *MeshResourceView) HostInstances(addrs map[string]bool) ([]*model.ServiceInstance, error) {
-	out := make([]*model.ServiceInstance, 0)
-	var errs error
-	for _, r := range v.registries {
-		instances, err := r.HostInstances(addrs)
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			out = append(out, instances...)
-		}
-	}
-
-	if len(out) > 0 {
-		if errs != nil {
-			glog.Warningf("HostInstances() found match but encountered an error: %v", errs)
-		}
-		return out, nil
-	}
-
-	return out, errs
+	lbls := resourceLabelsForValueSet(labelInstanceIP, addrs)
+	return v.serviceInstancesByLabels(lbls), nil
 }
 
 // Run starts all the MeshResourceViews
@@ -229,14 +193,14 @@ func (v *MeshResourceView) Run(stop <-chan struct{}) {
 	glog.V(2).Info("Registry Aggregator terminated")
 }
 
-// AppendServiceHandler implements a service catalog operation
+// AppendServiceHandler implements a service catalog operation, but limits to only one handler
 func (v *MeshResourceView) AppendServiceHandler(f func(*model.Service, model.Event)) error {
-    if v.serviceHandler != nil {
-        logMsg := "Fail to append service handler to aggregated mesh view. Maximum number of handlers '1' already added."
-        glog.V(2).Info(logMsg)
+	if v.serviceHandler != nil {
+		logMsg := "Fail to append service handler to aggregated mesh view. Maximum number of handlers '1' already added."
+		glog.V(2).Info(logMsg)
 		return errors.New(logMsg)
-    }
-    v.serviceHandler = f
+	}
+	v.serviceHandler = f
 	for _, r := range v.registries {
 		if err := r.AppendServiceHandler(r.HandleService); err != nil {
 			glog.V(2).Infof("Fail to append service handler to adapter %s", r.Name)
@@ -246,13 +210,13 @@ func (v *MeshResourceView) AppendServiceHandler(f func(*model.Service, model.Eve
 	return nil
 }
 
-// AppendInstanceHandler implements a service instance catalog operation
+// AppendInstanceHandler implements a service instance catalog operation, but limits to only one handler
 func (v *MeshResourceView) AppendInstanceHandler(f func(*model.ServiceInstance, model.Event)) error {
-    if v.serviceInstanceHandler != nil {
-        logMsg := "Fail to append service instance handler to aggregated mesh view. Maximum number of handlers '1' already added."
-        glog.V(2).Info(logMsg)
+	if v.serviceInstanceHandler != nil {
+		logMsg := "Fail to append service instance handler to aggregated mesh view. Maximum number of handlers '1' already added."
+		glog.V(2).Info(logMsg)
 		return errors.New(logMsg)
-    }
+	}
 	for _, r := range v.registries {
 		if err := r.AppendInstanceHandler(r.HandleServiceInstance); err != nil {
 			glog.V(2).Infof("Fail to append instance handler to adapter %s", r.Name)
@@ -272,32 +236,32 @@ func (v *MeshResourceView) GetIstioServiceAccounts(hostname string, ports []stri
 	return nil
 }
 
-
 func (v *MeshResourceView) handleService(k resourceKey, s *model.Service, e model.Event) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	old, found := v.services[k]
 	if found {
-    	v.serviceLabels.deleteLabel(k, labelServiceName, old.Hostname)
-    	if old.ExternalName != "" {
-    		v.serviceLabels.deleteLabel(k, labelServiceDNS, old.ExternalName)
-    	}
-    	if old.Address != "" {
-    		v.serviceLabels.deleteLabel(k, labelServiceVIP, getIPHex(old.Address))
-    	}
-    	delete(v.services, k)
+		v.serviceLabels.deleteLabel(k, labelServiceName, old.Hostname)
+		if old.ExternalName != "" {
+			v.serviceLabels.deleteLabel(k, labelServiceDNS, old.ExternalName)
+		}
+		if old.Address != "" {
+			v.serviceLabels.deleteLabel(k, labelServiceVIP, getIPHex(old.Address))
+		}
+		delete(v.services, k)
 	}
 	if e != model.EventDelete {
 		// Treat as upsert
-    	v.serviceLabels.addLabel(k, labelServiceName, s.Hostname)
-    	if s.ExternalName != "" {
-    		v.serviceLabels.addLabel(k, labelServiceDNS, s.ExternalName)
-    	}
-    	if s.Address != "" {
-    		v.serviceLabels.addLabel(k, labelServiceVIP, getIPHex(s.Address))
-    	}
-    	v.services[k] = s
+		v.serviceLabels.addLabel(k, labelServiceName, s.Hostname)
+		if s.ExternalName != "" {
+			v.serviceLabels.addLabel(k, labelServiceDNS, s.ExternalName)
+		}
+		if s.Address != "" {
+			v.serviceLabels.addLabel(k, labelServiceVIP, getIPHex(s.Address))
+		}
+		v.services[k] = s
 	}
+	v.serviceHandler(s, e)
 }
 
 func (v *MeshResourceView) handleServiceInstance(k resourceKey, i *model.ServiceInstance, e model.Event) {
@@ -305,35 +269,55 @@ func (v *MeshResourceView) handleServiceInstance(k resourceKey, i *model.Service
 	defer v.mu.Unlock()
 	old, found := v.serviceInstances[k]
 	if found {
-    	v.serviceInstanceLabels.deleteLabel(k, labelInstanceService, old.Service.Hostname)
-    	v.serviceInstanceLabels.deleteLabel(k, labelInstanceIP, getIPHex(old.Endpoint.Address))
-    	v.serviceInstanceLabels.deleteLabel(k, labelInstancePort, getPortHex(old.Endpoint.Port))
-    	if old.Endpoint.ServicePort.Name != "" {
-    		v.serviceInstanceLabels.deleteLabel(k, labelInstanceNamedPort, old.Endpoint.ServicePort.Name)
-    	}
-    	for label, value := range old.Labels {
-    		v.serviceInstanceLabels.deleteLabel(k, label, value)
-    	}
-    	delete(v.serviceInstances, k)
+		v.serviceInstanceLabels.deleteLabel(k, labelInstanceService, old.Service.Hostname)
+		v.serviceInstanceLabels.deleteLabel(k, labelInstanceIP, getIPHex(old.Endpoint.Address))
+		v.serviceInstanceLabels.deleteLabel(k, labelInstancePort, getPortHex(old.Endpoint.Port))
+		if old.Endpoint.ServicePort.Name != "" {
+			v.serviceInstanceLabels.deleteLabel(k, labelInstanceNamedPort, old.Endpoint.ServicePort.Name)
+		}
+		for label, value := range old.Labels {
+			v.serviceInstanceLabels.deleteLabel(k, label, value)
+		}
+		delete(v.serviceInstances, k)
 	}
 	if e != model.EventDelete {
 		// Treat as upsert
-    	v.serviceInstanceLabels.addLabel(k, labelInstanceService, i.Service.Hostname)
-    	v.serviceInstanceLabels.addLabel(k, labelInstanceIP, getIPHex(i.Endpoint.Address))
-    	v.serviceInstanceLabels.addLabel(k, labelInstancePort, getPortHex(i.Endpoint.Port))
-    	if i.Endpoint.ServicePort.Name != "" {
-    		v.serviceInstanceLabels.addLabel(k, labelInstanceNamedPort, i.Endpoint.ServicePort.Name)
-    	}
-    	for label, value := range i.Labels {
-    		v.serviceInstanceLabels.addLabel(k, label, value)
-    	}
-    	v.serviceInstances[k] = i
+		v.serviceInstanceLabels.addLabel(k, labelInstanceService, i.Service.Hostname)
+		v.serviceInstanceLabels.addLabel(k, labelInstanceIP, getIPHex(i.Endpoint.Address))
+		v.serviceInstanceLabels.addLabel(k, labelInstancePort, getPortHex(i.Endpoint.Port))
+		if i.Endpoint.ServicePort.Name != "" {
+			v.serviceInstanceLabels.addLabel(k, labelInstanceNamedPort, i.Endpoint.ServicePort.Name)
+		}
+		for label, value := range i.Labels {
+			v.serviceInstanceLabels.addLabel(k, label, value)
+		}
+		v.serviceInstances[k] = i
 	}
+	v.serviceInstanceHandler(i, e)
 }
 
+func (v *MeshResourceView) serviceByLabels(labels resourceLabels) []*model.Service {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	svcKeySet := v.serviceLabels.getResourceKeysMatching(labels)
+	out := make([]*model.Service, len(svcKeySet))
+	i := 0
+	for k := range svcKeySet {
+		out[i] = v.services[k]
+		i++
+	}
+	return out
+}
 
-func (c *MeshResourceView) serviceInstancesByLabels(labels map[string]*string) {
-    c.mu.RLock()
-    defer c.mu.RUnlock()
-    
-} 
+func (v *MeshResourceView) serviceInstancesByLabels(labels resourceLabels) []*model.ServiceInstance {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	instanceKeySet := v.serviceInstanceLabels.getResourceKeysMatching(labels)
+	out := make([]*model.ServiceInstance, len(instanceKeySet))
+	i := 0
+	for k := range instanceKeySet {
+		out[i] = v.serviceInstances[k]
+		i++
+	}
+	return out
+}

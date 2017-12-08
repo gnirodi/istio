@@ -55,14 +55,14 @@ func buildMockMeshView() *MeshView {
 		Name:             platform.ServiceRegistry("mockAdapter1"),
 		ServiceDiscovery: discovery1,
 		ServiceAccounts:  discovery1,
-		MeshView:       &MockMeshView{},
+		MeshView:         &MockMeshView{},
 	}
 
 	registry2 := Registry{
 		Name:             platform.ServiceRegistry("mockAdapter2"),
 		ServiceDiscovery: discovery2,
 		ServiceAccounts:  discovery2,
-		MeshView:       &MockMeshView{},
+		MeshView:         &MockMeshView{},
 	}
 
 	ctls := NewMeshView()
