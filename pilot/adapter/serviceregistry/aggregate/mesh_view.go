@@ -201,8 +201,8 @@ func (v *MeshResourceView) AppendServiceHandler(f func(*model.Service, model.Eve
 		return errors.New(logMsg)
 	}
 	v.serviceHandler = f
-	for idx, _ := range v.registries {
-	    r := &v.registries[idx]
+	for idx := range v.registries {
+		r := &v.registries[idx]
 		if err := r.AppendServiceHandler(r.HandleService); err != nil {
 			glog.V(2).Infof("Fail to append service handler to adapter %s", r.Name)
 			return err
@@ -229,23 +229,23 @@ func (v *MeshResourceView) AppendInstanceHandler(f func(*model.ServiceInstance, 
 
 // GetIstioServiceAccounts implements model.ServiceAccounts operation
 func (v *MeshResourceView) GetIstioServiceAccounts(hostname string, ports []string) []string {
-    hostLabel := resourceLabelsForNameValue(labelServiceName, hostname)
- 	hostPortLbls := resourceLabelsForValues(labelInstancePort, ports)
+	hostLabel := resourceLabelsForNameValue(labelServiceName, hostname)
+	hostPortLbls := resourceLabelsForValues(labelInstancePort, ports)
 	hostPortLbls.appendFrom(hostLabel)
 	instances := v.serviceInstancesByLabels(hostPortLbls)
 	saSet := make(map[string]bool)
 	for _, si := range instances {
- 		if si.ServiceAccount != "" {
+		if si.ServiceAccount != "" {
 			saSet[si.ServiceAccount] = true
 		}
 	}
-    svcs := v.serviceByLabels(hostLabel)
-    for _, svc := range svcs {
-    	for _, serviceAccount := range svc.ServiceAccounts {
-    		sa := serviceAccount
-    		saSet[sa] = true
-    	}
-    }
+	svcs := v.serviceByLabels(hostLabel)
+	for _, svc := range svcs {
+		for _, serviceAccount := range svc.ServiceAccounts {
+			sa := serviceAccount
+			saSet[sa] = true
+		}
+	}
 	saArray := make([]string, 0, len(saSet))
 	for sa := range saSet {
 		saArray = append(saArray, sa)

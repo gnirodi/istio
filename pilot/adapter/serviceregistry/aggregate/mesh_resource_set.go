@@ -87,11 +87,10 @@ func (rl resourceLabels) appendNameValue(name, value string) {
 }
 
 func (rl resourceLabels) appendFrom(other resourceLabels) {
-    for _, l := range other {
-    	rl = append(rl, l)
-    }
+	for _, l := range other {
+		rl = append(rl, l)
+	}
 }
-
 
 func (ks *resourceKeySet) appendFrom(other *resourceKeySet) {
 	for k := range *other {
@@ -143,7 +142,7 @@ func (nameValueKeysMap *nameValueKeysMap) getResourceKeysMatching(labels resourc
 	}
 	countLabels := len(labels)
 	if countLabels == 0 {
-	    // There must be at least one label else return nothing
+		// There must be at least one label else return nothing
 		return resourceKeySet{}
 	}
 	// Note: 0th index has the smallest keySet
