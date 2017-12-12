@@ -86,6 +86,13 @@ func (rl resourceLabels) appendNameValue(name, value string) {
 	rl = append(rl, resourceLabel{name, &value})
 }
 
+func (rl resourceLabels) appendFrom(other resourceLabels) {
+    for _, l := range other {
+    	rl = append(rl, l)
+    }
+}
+
+
 func (ks *resourceKeySet) appendFrom(other *resourceKeySet) {
 	for k := range *other {
 		(*ks)[k] = true
@@ -100,7 +107,7 @@ func (nameValueKeysMap *nameValueKeysMap) addLabel(k resourceKey, labelName, lab
 	}
 	keySet, labelValueFound := valueKeySetMap[labelValue]
 	if !labelValueFound {
-		keySet := make(resourceKeySet)
+		keySet = make(resourceKeySet)
 		valueKeySetMap[labelValue] = keySet
 	}
 	keySet[k] = true
@@ -135,6 +142,10 @@ func (nameValueKeysMap *nameValueKeysMap) getResourceKeysMatching(labels resourc
 		keySet     resourceKeySet
 	}
 	countLabels := len(labels)
+	if countLabels == 0 {
+	    // There must be at least one label else return nothing
+		return resourceKeySet{}
+	}
 	// Note: 0th index has the smallest keySet
 	matchingSets := make([]matchingSet, countLabels)
 	smallestSetLen := math.MaxInt32
@@ -169,8 +180,9 @@ func (nameValueKeysMap *nameValueKeysMap) getResourceKeysMatching(labels resourc
 				matchingSets[setIdx] = swappedMatchingSet
 			}
 		}
+		setIdx++
 	}
-	finalKeySet := matchingSets[setIdx].keySet
+	finalKeySet := matchingSets[0].keySet
 	if countLabels > 1 {
 		finalKeySet = make(resourceKeySet)
 		finalKeySet.appendFrom(&matchingSets[setIdx].keySet)

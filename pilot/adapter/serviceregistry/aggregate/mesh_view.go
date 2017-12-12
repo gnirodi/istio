@@ -48,7 +48,7 @@ type Registry struct {
 	model.ServiceDiscovery
 	model.ServiceAccounts
 	// The service mesh view that this registry belongs to
-	meshView *MeshResourceView
+	MeshView *MeshResourceView
 }
 
 // MeshResourceView is an aggregated store for resources sourced from various registries
@@ -116,19 +116,19 @@ func getPortHex(port int) string {
 
 func (r *Registry) HandleService(s *model.Service, e model.Event) {
 	k := BuildServiceKey(r, s)
-	r.meshView.handleService(k, s, e)
+	r.MeshView.handleService(k, s, e)
 }
 
 func (r *Registry) HandleServiceInstance(i *model.ServiceInstance, e model.Event) {
 	k := BuildServiceInstanceKey(i)
-	r.meshView.handleServiceInstance(k, i, e)
+	r.MeshView.handleServiceInstance(k, i, e)
 }
 
 // AddRegistry adds registries into the aggregated MeshResourceView
 func (v *MeshResourceView) AddRegistry(registry Registry) {
-	// Create bidirectional associations between the meshView and
+	// Create bidirectional associations between the MeshView and
 	// the registry being added
-	registry.meshView = v
+	registry.MeshView = v
 	v.registries = append(v.registries, registry)
 }
 
@@ -201,7 +201,8 @@ func (v *MeshResourceView) AppendServiceHandler(f func(*model.Service, model.Eve
 		return errors.New(logMsg)
 	}
 	v.serviceHandler = f
-	for _, r := range v.registries {
+	for idx, _ := range v.registries {
+	    r := &v.registries[idx]
 		if err := r.AppendServiceHandler(r.HandleService); err != nil {
 			glog.V(2).Infof("Fail to append service handler to adapter %s", r.Name)
 			return err
@@ -228,12 +229,28 @@ func (v *MeshResourceView) AppendInstanceHandler(f func(*model.ServiceInstance, 
 
 // GetIstioServiceAccounts implements model.ServiceAccounts operation
 func (v *MeshResourceView) GetIstioServiceAccounts(hostname string, ports []string) []string {
-	for _, r := range v.registries {
-		if svcAccounts := r.GetIstioServiceAccounts(hostname, ports); svcAccounts != nil {
-			return svcAccounts
+    hostLabel := resourceLabelsForNameValue(labelServiceName, hostname)
+ 	hostPortLbls := resourceLabelsForValues(labelInstancePort, ports)
+	hostPortLbls.appendFrom(hostLabel)
+	instances := v.serviceInstancesByLabels(hostPortLbls)
+	saSet := make(map[string]bool)
+	for _, si := range instances {
+ 		if si.ServiceAccount != "" {
+			saSet[si.ServiceAccount] = true
 		}
 	}
-	return nil
+    svcs := v.serviceByLabels(hostLabel)
+    for _, svc := range svcs {
+    	for _, serviceAccount := range svc.ServiceAccounts {
+    		sa := serviceAccount
+    		saSet[sa] = true
+    	}
+    }
+	saArray := make([]string, 0, len(saSet))
+	for sa := range saSet {
+		saArray = append(saArray, sa)
+	}
+	return saArray
 }
 
 func (v *MeshResourceView) handleService(k resourceKey, s *model.Service, e model.Event) {
