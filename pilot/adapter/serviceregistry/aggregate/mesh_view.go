@@ -166,17 +166,17 @@ func (v *MeshResourceView) Instances(hostname string, ports []string,
 	hostPortLbls := resourceLabelsForValues(labelInstancePort, ports)
 	hostPortLbls.appendNameValue(labelInstanceService, hostname)
 	if len(labels) > 0 {
-    	for _, lblset := range labels {
-    		lbls := resourceLabelsFromModelLabels(lblset)
-    		lbls = append(lbls, hostPortLbls...)
-    		out := v.serviceInstancesByLabels(lbls)
-    		if len(out) > 0 {
-    			return out, nil
-    		}
-    	}
-    	return nil, nil
+		for _, lblset := range labels {
+			lbls := resourceLabelsFromModelLabels(lblset)
+			lbls = append(lbls, hostPortLbls...)
+			out := v.serviceInstancesByLabels(lbls)
+			if len(out) > 0 {
+				return out, nil
+			}
+		}
+		return nil, nil
 	}
-	
+
 	return v.serviceInstancesByLabels(hostPortLbls), nil
 }
 

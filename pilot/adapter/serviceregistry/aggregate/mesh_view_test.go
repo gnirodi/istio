@@ -215,8 +215,8 @@ func expectServices(t *testing.T, expected, actual []*model.Service) {
 }
 
 func buildInstanceKey(i *model.ServiceInstance) string {
-    return "[" + i.Service.Hostname + "][" + i.Endpoint.Address + "][" + 
-        hex.EncodeToString([]byte{byte((i.Endpoint.Port >> 8) & 0xFF), byte(i.Endpoint.Port & 0xFF)}) + "]"
+	return "[" + i.Service.Hostname + "][" + i.Endpoint.Address + "][" +
+		hex.EncodeToString([]byte{byte((i.Endpoint.Port >> 8) & 0xFF), byte(i.Endpoint.Port & 0xFF)}) + "]"
 }
 
 func expectInstances(t *testing.T, expected, actual []*model.ServiceInstance) {
@@ -228,7 +228,7 @@ func expectInstances(t *testing.T, expected, actual []*model.ServiceInstance) {
 	for _, inst := range actual {
 		actualSet[buildInstanceKey(inst)] = true
 	}
-	for expectedKey, _ := range expectedSet {
+	for expectedKey := range expectedSet {
 		_, found := actualSet[expectedKey]
 		if !found {
 			t.Errorf("Expected instance '%s'. Found none", expectedKey)
@@ -241,7 +241,6 @@ func expectInstances(t *testing.T, expected, actual []*model.ServiceInstance) {
 		}
 	}
 }
-
 
 func svcList(s ...*model.Service) []*model.Service {
 	return s
@@ -343,55 +342,55 @@ func TestGetService(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Services() encountered unexpected error: %v", err)
 		}
-        if svc != nil {
-            t.Errorf("Expected nil. Found: '%v'", svc)
-        }
+		if svc != nil {
+			t.Errorf("Expected nil. Found: '%v'", svc)
+		}
 	})
 	evVerifier.mockSvcEvent(platform1, mock.HelloService, model.EventAdd)
 	evVerifier.mockSvcEvent(platform2, mock.WorldService, model.EventAdd)
 	t.Run("AfterAddHelloAndWorld", func(t *testing.T) {
-	    expectedList := svcList(mock.HelloService, mock.WorldService)
-	    for _, expectedSvc := range expectedList {
-    		svc, err := meshView.GetService(expectedSvc.Hostname)
-    		if err != nil {
-    			t.Fatalf("Services() encountered unexpected error: %v", err)
-    		}
-            if svc == nil {
-                t.Errorf("Expected '%v'. Found none", expectedSvc)
-            }
-	    }
+		expectedList := svcList(mock.HelloService, mock.WorldService)
+		for _, expectedSvc := range expectedList {
+			svc, err := meshView.GetService(expectedSvc.Hostname)
+			if err != nil {
+				t.Fatalf("Services() encountered unexpected error: %v", err)
+			}
+			if svc == nil {
+				t.Errorf("Expected '%v'. Found none", expectedSvc)
+			}
+		}
 	})
 	t.Run("NonExistent", func(t *testing.T) {
 		svc, err := meshView.GetService("some-non-existent")
 		if err != nil {
 			t.Fatalf("Services() encountered unexpected error: %v", err)
 		}
-        if svc != nil {
-            t.Errorf("Expected nil. Found: '%v'", svc)
-        }
+		if svc != nil {
+			t.Errorf("Expected nil. Found: '%v'", svc)
+		}
 	})
-    	evVerifier.mockSvcEvent(platform1, mock.HelloService, model.EventDelete)
+	evVerifier.mockSvcEvent(platform1, mock.HelloService, model.EventDelete)
 	t.Run("AfterDeleteHelloService", func(t *testing.T) {
 		svc, err := meshView.GetService(mock.HelloService.Hostname)
 		if err != nil {
 			t.Fatalf("Services() encountered unexpected error: %v", err)
 		}
-        if svc != nil {
-            t.Errorf("Expected nil. Found: '%v'", svc)
-        }
+		if svc != nil {
+			t.Errorf("Expected nil. Found: '%v'", svc)
+		}
 	})
 	evVerifier.mockSvcEvent(platform2, mock.WorldService, model.EventDelete)
 	t.Run("AfterDelete", func(t *testing.T) {
-	    expectedNilList := svcList(mock.HelloService, mock.WorldService)
-	    for _, expectedSvc := range expectedNilList {
-    		svc, err := meshView.GetService(expectedSvc.Hostname)
-    		if err != nil {
-    			t.Fatalf("Services() encountered unexpected error: %v", err)
-    		}
-            if svc != nil {
-                t.Errorf("Expected nil. Found: '%v'", svc)
-            }
-	    }
+		expectedNilList := svcList(mock.HelloService, mock.WorldService)
+		for _, expectedSvc := range expectedNilList {
+			svc, err := meshView.GetService(expectedSvc.Hostname)
+			if err != nil {
+				t.Fatalf("Services() encountered unexpected error: %v", err)
+			}
+			if svc != nil {
+				t.Errorf("Expected nil. Found: '%v'", svc)
+			}
+		}
 	})
 }
 
@@ -433,42 +432,42 @@ func TestManagementPorts(t *testing.T) {
 }
 
 func buildMockInstancesFromService(svc *model.Service) []*model.ServiceInstance {
-    out := make([]*model.ServiceInstance, len(svc.Ports))
-    for pi, port := range svc.Ports {
-        out[pi] = mock.MakeInstance(svc, port, 1, "")
-    }
-    return out
+	out := make([]*model.ServiceInstance, len(svc.Ports))
+	for pi, port := range svc.Ports {
+		out[pi] = mock.MakeInstance(svc, port, 1, "")
+	}
+	return out
 }
 
 func buildMockInstances() []*model.ServiceInstance {
-    helloSvcInst := buildMockInstancesFromService(mock.HelloService)
-    worldSvcInst := buildMockInstancesFromService(mock.WorldService) 
-    return append(helloSvcInst, worldSvcInst...)
+	helloSvcInst := buildMockInstancesFromService(mock.HelloService)
+	worldSvcInst := buildMockInstancesFromService(mock.WorldService)
+	return append(helloSvcInst, worldSvcInst...)
 }
 
 func TestInstances(t *testing.T) {
-    mockInstances = buildMockInstances()
+	mockInstances = buildMockInstances()
 	meshView := buildMockMeshResourceView()
 	t.Run("EmptyView", func(t *testing.T) {
 		instances, err := meshView.Instances(mock.HelloService.Hostname, []string{}, model.LabelsCollection{})
 		if err != nil {
 			t.Fatalf("Instances() encountered unexpected error: %v", err)
 		}
-        if len(instances) > 0 {
-            t.Errorf("Expected 0 instances. Found: '%v'", instances)
-        }
+		if len(instances) > 0 {
+			t.Errorf("Expected 0 instances. Found: '%v'", instances)
+		}
 	})
 	lenInst := len(mockInstances)
 	halfLenInst := lenInst / 2
 	for idx, inst := range mockInstances {
-	    var platform platform.ServiceRegistry
-	    if idx < halfLenInst {
-	        platform = platform1
-	    } else {
-	        platform = platform2
-	    }
-    	evVerifier.mockInstEvent(platform, inst, model.EventAdd)
-	} 
+		var platform platform.ServiceRegistry
+		if idx < halfLenInst {
+			platform = platform1
+		} else {
+			platform = platform2
+		}
+		evVerifier.mockInstEvent(platform, inst, model.EventAdd)
+	}
 	t.Run("AddInstancesBothPlatforms", func(t *testing.T) {
 		instances, err := meshView.Instances(mock.WorldService.Hostname, []string{}, model.LabelsCollection{})
 		if err != nil {
