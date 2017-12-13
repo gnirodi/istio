@@ -164,16 +164,20 @@ func (v *MeshResourceView) ManagementPorts(addr string) model.PortList {
 func (v *MeshResourceView) Instances(hostname string, ports []string,
 	labels model.LabelsCollection) ([]*model.ServiceInstance, error) {
 	hostPortLbls := resourceLabelsForValues(labelInstancePort, ports)
-	hostPortLbls.appendNameValue(labelServiceName, hostname)
-	for _, lblset := range labels {
-		lbls := resourceLabelsFromModelLabels(lblset)
-		lbls = append(lbls, hostPortLbls...)
-		out := v.serviceInstancesByLabels(lbls)
-		if len(out) > 0 {
-			return out, nil
-		}
+	hostPortLbls.appendNameValue(labelInstanceService, hostname)
+	if len(labels) > 0 {
+    	for _, lblset := range labels {
+    		lbls := resourceLabelsFromModelLabels(lblset)
+    		lbls = append(lbls, hostPortLbls...)
+    		out := v.serviceInstancesByLabels(lbls)
+    		if len(out) > 0 {
+    			return out, nil
+    		}
+    	}
+    	return nil, nil
 	}
-	return nil, nil
+	
+	return v.serviceInstancesByLabels(hostPortLbls), nil
 }
 
 // HostInstances lists service instances for a given set of IPv4 addresses.
@@ -218,7 +222,9 @@ func (v *MeshResourceView) AppendInstanceHandler(f func(*model.ServiceInstance, 
 		glog.V(2).Info(logMsg)
 		return errors.New(logMsg)
 	}
-	for _, r := range v.registries {
+	v.serviceInstanceHandler = f
+	for idx := range v.registries {
+		r := &v.registries[idx]
 		if err := r.AppendInstanceHandler(r.HandleServiceInstance); err != nil {
 			glog.V(2).Infof("Fail to append instance handler to adapter %s", r.Name)
 			return err
