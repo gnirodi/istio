@@ -481,6 +481,20 @@ func TestInstances(t *testing.T) {
 		expectInstances(t, mockInstances[0:halfLenInst], instances)
 		evVerifier.verifyInstanceEvents(t)
 	})
+	evVerifier.mockInstEvent(platform2, mockInstances[lenInst-1], model.EventDelete)
+	t.Run("RemovedOneInstance", func(t *testing.T) {
+		instances, err := meshView.Instances(mock.WorldService.Hostname, []string{}, model.LabelsCollection{})
+		if err != nil {
+			t.Fatalf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
+		}
+		expectInstances(t, mockInstances[halfLenInst:lenInst-1], instances)
+		instances, err = meshView.Instances(mock.HelloService.Hostname, []string{}, model.LabelsCollection{})
+		if err != nil {
+			t.Fatalf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.HelloService.Hostname, err)
+		}
+		expectInstances(t, mockInstances[0:halfLenInst], instances)
+		evVerifier.verifyInstanceEvents(t)
+	})
 }
 
 /*
