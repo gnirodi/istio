@@ -82,13 +82,13 @@ func resourceLabelsForValueSet(name string, values map[string]bool) resourceLabe
 	return rl
 }
 
-func (rl resourceLabels) appendNameValue(name, value string) {
-	rl = append(rl, resourceLabel{name, &value})
+func (rl *resourceLabels) appendNameValue(name, value string) {
+	*rl = append(*rl, resourceLabel{name, &value})
 }
 
-func (rl resourceLabels) appendFrom(other resourceLabels) {
+func (rl *resourceLabels) appendFrom(other resourceLabels) {
 	for _, l := range other {
-		rl = append(rl, l)
+		*rl = append(*rl, l)
 	}
 }
 
