@@ -18,7 +18,7 @@
 version: '2'
 services:
   details-v1-init:
-    image: gcr.io/istio-testing/proxy_init:3101ea9d82a5f83b699c2d3245b371a19fa6bef4
+    image: docker.io/gnirodi/proxy_init:gnirodi
     cap_add:
       - NET_ADMIN
     network_mode: "container:eureka_details-v1_1"
@@ -28,15 +28,15 @@ services:
       - -u
       - "1337"
   details-v1-sidecar:
-    image: gcr.io/istio-testing/proxy_debug:d82d983e983dc14fe4ce8b39374a91ef0ced6779
+    image: docker.io/gnirodi/proxy_debug:164dd584e63065ef8150bddf23d2c5c196319bad
     network_mode: "container:eureka_details-v1_1"
     entrypoint:
       - su
       - istio-proxy
       - -c
-      - "/usr/local/bin/pilot-agent proxy -v 2 --discoveryAddress istio-pilot:8080 --serviceregistry Eureka --serviceCluster details-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
+      - "/usr/local/bin/pilot-agent proxy -v 2 --serviceregistry Eureka --serviceCluster details-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
   ratings-v1-init:
-    image: gcr.io/istio-testing/proxy_init:3101ea9d82a5f83b699c2d3245b371a19fa6bef4
+    image: docker.io/gnirodi/proxy_init:gnirodi
     cap_add:
       - NET_ADMIN
     network_mode: "container:eureka_ratings-v1_1"
@@ -46,15 +46,15 @@ services:
       - -u
       - "1337"
   ratings-v1-sidecar:
-    image: gcr.io/istio-testing/proxy_debug:d82d983e983dc14fe4ce8b39374a91ef0ced6779
+    image: docker.io/gnirodi/proxy_debug:164dd584e63065ef8150bddf23d2c5c196319bad
     network_mode: "container:eureka_ratings-v1_1"
     entrypoint:
       - su
       - istio-proxy
       - -c
-      - "/usr/local/bin/pilot-agent proxy -v 2 --discoveryAddress istio-pilot:8080 --serviceregistry Eureka --serviceCluster ratings-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
+      - "/usr/local/bin/pilot-agent proxy -v 2 --serviceregistry Eureka --serviceCluster ratings-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
   productpage-v1-init:
-    image: gcr.io/istio-testing/proxy_init:3101ea9d82a5f83b699c2d3245b371a19fa6bef4
+    image: docker.io/gnirodi/proxy_init:gnirodi
     cap_add:
       - NET_ADMIN
     network_mode: "container:eureka_productpage-v1_1"
@@ -64,15 +64,15 @@ services:
       - -u
       - "1337"
   productpage-v1-sidecar:
-    image: gcr.io/istio-testing/proxy_debug:d82d983e983dc14fe4ce8b39374a91ef0ced6779
+    image: docker.io/gnirodi/proxy_debug:164dd584e63065ef8150bddf23d2c5c196319bad
     network_mode: "container:eureka_productpage-v1_1"
     entrypoint:
       - su
       - istio-proxy
       - -c
-      - "/usr/local/bin/pilot-agent proxy -v 2 --discoveryAddress istio-pilot:8080 --serviceregistry Eureka --serviceCluster productpage-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
+      - "/usr/local/bin/pilot-agent proxy -v 2 --serviceregistry Eureka --serviceCluster productpage-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
   reviews-v1-init:
-    image: gcr.io/istio-testing/proxy_init:3101ea9d82a5f83b699c2d3245b371a19fa6bef4
+    image: docker.io/gnirodi/proxy_init:gnirodi
     cap_add:
       - NET_ADMIN
     network_mode: "container:eureka_reviews-v1_1"
@@ -82,15 +82,15 @@ services:
       - -u
       - "1337"
   reviews-v1-sidecar:
-    image: gcr.io/istio-testing/proxy_debug:d82d983e983dc14fe4ce8b39374a91ef0ced6779
+    image: docker.io/gnirodi/proxy_debug:164dd584e63065ef8150bddf23d2c5c196319bad
     network_mode: "container:eureka_reviews-v1_1"
     entrypoint:
       - su
       - istio-proxy
       - -c
-      - "/usr/local/bin/pilot-agent proxy -v 2 --discoveryAddress istio-pilot:8080 --serviceregistry Eureka --serviceCluster reviews-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
+      - "/usr/local/bin/pilot-agent proxy -v 2 --serviceregistry Eureka --serviceCluster reviews-v1 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
   reviews-v2-init:
-    image: gcr.io/istio-testing/proxy_init:3101ea9d82a5f83b699c2d3245b371a19fa6bef4
+    image: docker.io/gnirodi/proxy_init:gnirodi
     cap_add:
       - NET_ADMIN
     network_mode: "container:eureka_reviews-v2_1"
@@ -100,15 +100,15 @@ services:
       - -u
       - "1337"
   reviews-v2-sidecar:
-    image: gcr.io/istio-testing/proxy_debug:d82d983e983dc14fe4ce8b39374a91ef0ced6779
+    image: docker.io/gnirodi/proxy_debug:164dd584e63065ef8150bddf23d2c5c196319bad
     network_mode: "container:eureka_reviews-v2_1"
     entrypoint:
       - su
       - istio-proxy
       - -c
-      - "/usr/local/bin/pilot-agent proxy -v 2 --discoveryAddress istio-pilot:8080 --serviceregistry Eureka --serviceCluster reviews-v2 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
+      - "/usr/local/bin/pilot-agent proxy -v 2 --serviceregistry Eureka --serviceCluster reviews-v2 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
   reviews-v3-init:
-    image: gcr.io/istio-testing/proxy_init:3101ea9d82a5f83b699c2d3245b371a19fa6bef4
+    image: docker.io/gnirodi/proxy_init:gnirodi
     cap_add:
       - NET_ADMIN
     network_mode: "container:eureka_reviews-v3_1"
@@ -118,10 +118,10 @@ services:
       - -u
       - "1337"
   reviews-v3-sidecar:
-    image: gcr.io/istio-testing/proxy_debug:d82d983e983dc14fe4ce8b39374a91ef0ced6779
+    image: docker.io/gnirodi/proxy_debug:164dd584e63065ef8150bddf23d2c5c196319bad
     network_mode: "container:eureka_reviews-v3_1"
     entrypoint:
       - su
       - istio-proxy
       - -c
-      - "/usr/local/bin/pilot-agent proxy -v 2 --discoveryAddress istio-pilot:8080 --serviceregistry Eureka --serviceCluster reviews-v3 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
+      - "/usr/local/bin/pilot-agent proxy -v 2 --serviceregistry Eureka --serviceCluster reviews-v3 --zipkinAddress zipkin:9411 --configPath /var/lib/istio >/tmp/envoy.log"
