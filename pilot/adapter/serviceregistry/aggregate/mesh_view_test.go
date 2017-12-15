@@ -15,15 +15,14 @@
 package aggregate
 
 import (
-	"fmt"
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform"
 	"istio.io/istio/pilot/test/mock"
 )
-
 
 var platform1 platform.ServiceRegistry
 var platform2 platform.ServiceRegistry
@@ -362,7 +361,7 @@ func TestGetService(t *testing.T) {
 			svc, err := meshView.GetService(expectedSvc.Hostname)
 			if err != nil {
 				t.Errorf("Services() encountered unexpected error: %v", err)
-    			return
+				return
 			}
 			if svc == nil {
 				t.Errorf("Expected '%v'. Found none", expectedSvc)
@@ -397,7 +396,7 @@ func TestGetService(t *testing.T) {
 			svc, err := meshView.GetService(expectedSvc.Hostname)
 			if err != nil {
 				t.Errorf("Services() encountered unexpected error: %v", err)
-    			return
+				return
 			}
 			if svc != nil {
 				t.Errorf("Expected nil. Found: '%v'", svc)
@@ -470,15 +469,15 @@ func triggerAddInstanceEvents() {
 }
 
 func buildLabelCollection(inst []*model.ServiceInstance) model.LabelsCollection {
-    out := model.LabelsCollection{}
-    for _, i := range inst {
-        out = append(out,
-            model.Labels {
-                labelInstanceIP: i.Endpoint.Address,
-                labelInstanceNamedPort: i.Endpoint.ServicePort.Name,
-        })
-    }
-    return out
+	out := model.LabelsCollection{}
+	for _, i := range inst {
+		out = append(out,
+			model.Labels{
+				labelInstanceIP:        i.Endpoint.Address,
+				labelInstanceNamedPort: i.Endpoint.ServicePort.Name,
+			})
+	}
+	return out
 }
 
 func TestInstances(t *testing.T) {
@@ -494,7 +493,7 @@ func TestInstances(t *testing.T) {
 			t.Errorf("Expected 0 instances. Found: '%v'", instances)
 		}
 	})
-    triggerAddInstanceEvents()
+	triggerAddInstanceEvents()
 	t.Run("AddInstancesBothPlatforms", func(t *testing.T) {
 		instances, err := meshView.Instances(mock.WorldService.Hostname, []string{}, model.LabelsCollection{})
 		if err != nil {
@@ -511,56 +510,56 @@ func TestInstances(t *testing.T) {
 		evVerifier.verifyInstanceEvents(t)
 	})
 	t.Run("WithLabelSet", func(t *testing.T) {
-	    t.Run("OneSet", func(t *testing.T) {
-    		instances, err := meshView.Instances(mock.WorldService.Hostname, []string{fmt.Sprintf("%d", worldSvcInst[0].Endpoint.Port)}, 
-    		    buildLabelCollection([]*model.ServiceInstance{worldSvcInst[0]}))
-    		if err != nil {
-    			t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
-    			return
-    		}
-    		expectInstances(t, []*model.ServiceInstance{worldSvcInst[0]}, instances)
-	    })
-	    t.Run("MultipleFirst", func(t *testing.T) {
-    		instances, err := meshView.Instances(mock.WorldService.Hostname, []string{}, 
-    		    buildLabelCollection([]*model.ServiceInstance{worldSvcInst[0], worldSvcInst[2]}))
-    		if err != nil {
-    			t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
-    			return
-    		}
-    		if len(instances) == 0 {
-    		    t.Errorf("Expecting at least one of '%v' or '%v'. found none", *worldSvcInst[0], *worldSvcInst[2])
-    		    return
-    		}
-    		var instanceToVerify *model.ServiceInstance 
-    		if instances[0].Endpoint.Port == worldSvcInst[0].Endpoint.Port {
-    		    instanceToVerify = worldSvcInst[0]
-    		} else {
-    		    instanceToVerify = worldSvcInst[2]
-    		}
-    		expectInstances(t, []*model.ServiceInstance{instanceToVerify}, instances)
-	    })
+		t.Run("OneSet", func(t *testing.T) {
+			instances, err := meshView.Instances(mock.WorldService.Hostname, []string{fmt.Sprintf("%d", worldSvcInst[0].Endpoint.Port)},
+				buildLabelCollection([]*model.ServiceInstance{worldSvcInst[0]}))
+			if err != nil {
+				t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
+				return
+			}
+			expectInstances(t, []*model.ServiceInstance{worldSvcInst[0]}, instances)
+		})
+		t.Run("MultipleFirst", func(t *testing.T) {
+			instances, err := meshView.Instances(mock.WorldService.Hostname, []string{},
+				buildLabelCollection([]*model.ServiceInstance{worldSvcInst[0], worldSvcInst[2]}))
+			if err != nil {
+				t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
+				return
+			}
+			if len(instances) == 0 {
+				t.Errorf("Expecting at least one of '%v' or '%v'. found none", *worldSvcInst[0], *worldSvcInst[2])
+				return
+			}
+			var instanceToVerify *model.ServiceInstance
+			if instances[0].Endpoint.Port == worldSvcInst[0].Endpoint.Port {
+				instanceToVerify = worldSvcInst[0]
+			} else {
+				instanceToVerify = worldSvcInst[2]
+			}
+			expectInstances(t, []*model.ServiceInstance{instanceToVerify}, instances)
+		})
 	})
 	idxToChange := 2
 	evVerifier.mockInstEvent(platform2, worldSvcInst[idxToChange], model.EventDelete)
 	t.Run("RemovedOneInstance", func(t *testing.T) {
-	    t.Run("CheckRemoved", func(t *testing.T) {
-    		instances, err := meshView.Instances(mock.WorldService.Hostname, []string{}, model.LabelsCollection{})
-    		if err != nil {
-    			t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
-    			return
-    		}
-    		expectedInstances := worldSvcInst[0:idxToChange]
-    		expectedInstances = append(expectedInstances, worldSvcInst[idxToChange+1:]...)
-    		expectInstances(t, expectedInstances, instances)
-	    })
-	    t.Run("CheckUntouched", func(t *testing.T) {
-    		instances, err := meshView.Instances(mock.HelloService.Hostname, []string{}, model.LabelsCollection{})
-    		if err != nil {
-    			t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.HelloService.Hostname, err)
-    			return
-    		}
-    		expectInstances(t, helloSvcInst, instances)
-	    })
+		t.Run("CheckRemoved", func(t *testing.T) {
+			instances, err := meshView.Instances(mock.WorldService.Hostname, []string{}, model.LabelsCollection{})
+			if err != nil {
+				t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.WorldService.Hostname, err)
+				return
+			}
+			expectedInstances := worldSvcInst[0:idxToChange]
+			expectedInstances = append(expectedInstances, worldSvcInst[idxToChange+1:]...)
+			expectInstances(t, expectedInstances, instances)
+		})
+		t.Run("CheckUntouched", func(t *testing.T) {
+			instances, err := meshView.Instances(mock.HelloService.Hostname, []string{}, model.LabelsCollection{})
+			if err != nil {
+				t.Errorf("Services() encountered unexpected error retrieving instance for host '%s': %v", mock.HelloService.Hostname, err)
+				return
+			}
+			expectInstances(t, helloSvcInst, instances)
+		})
 		evVerifier.verifyInstanceEvents(t)
 	})
 	evVerifier.mockInstEvent(platform2, mockInstances[idxToChange], model.EventUpdate)
@@ -597,12 +596,12 @@ func TestInstances(t *testing.T) {
 	})
 }
 
-func TestHostInstances(t *testing.T) { 
+func TestHostInstances(t *testing.T) {
 	mockInstances = buildMockInstances()
-	meshView := buildMockMeshResourceView()    
-    instanceToVerify := worldSvcInst[3]	        
+	meshView := buildMockMeshResourceView()
+	instanceToVerify := worldSvcInst[3]
 	t.Run("EmptyView", func(t *testing.T) {
-	    addresses := map[string]bool{ instanceToVerify.Endpoint.Address: true }    
+		addresses := map[string]bool{instanceToVerify.Endpoint.Address: true}
 		instances, err := meshView.HostInstances(addresses)
 		if err != nil {
 			t.Errorf("Instances() encountered unexpected error: %v", err)
@@ -612,19 +611,19 @@ func TestHostInstances(t *testing.T) {
 			t.Errorf("Expected 0 instances. Found: '%v'", instances)
 		}
 	})
-    triggerAddInstanceEvents()
+	triggerAddInstanceEvents()
 	t.Run("AfterAdd", func(t *testing.T) {
-	    addresses := map[string]bool{ instanceToVerify.Endpoint.Address: true }    
+		addresses := map[string]bool{instanceToVerify.Endpoint.Address: true}
 		instances, err := meshView.HostInstances(addresses)
 		if err != nil {
 			t.Errorf("Instances() encountered unexpected error: %v", err)
 			return
 		}
-        expectInstances(t, worldSvcInst, instances)
+		expectInstances(t, worldSvcInst, instances)
 	})
 	evVerifier.mockInstEvent(platform2, instanceToVerify, model.EventDelete)
 	t.Run("AfterDeleteOne", func(t *testing.T) {
-	    addresses := map[string]bool{ instanceToVerify.Endpoint.Address: true }    
+		addresses := map[string]bool{instanceToVerify.Endpoint.Address: true}
 		instances, err := meshView.HostInstances(addresses)
 		if err != nil {
 			t.Errorf("Instances() encountered unexpected error: %v", err)
@@ -632,22 +631,22 @@ func TestHostInstances(t *testing.T) {
 		}
 		expectedInstances := []*model.ServiceInstance{}
 		for _, inst := range worldSvcInst {
-		    if inst.Endpoint.Address == instanceToVerify.Endpoint.Address &&
-    		    inst.Endpoint.Port == instanceToVerify.Endpoint.Port {
-    		    continue
-    		}
-    		expectedInstances = append(expectedInstances, inst)
+			if inst.Endpoint.Address == instanceToVerify.Endpoint.Address &&
+				inst.Endpoint.Port == instanceToVerify.Endpoint.Port {
+				continue
+			}
+			expectedInstances = append(expectedInstances, inst)
 		}
-        expectInstances(t, expectedInstances, instances)
+		expectInstances(t, expectedInstances, instances)
 	})
 }
 
 func buildMockAccounts(inst *model.ServiceInstance) map[string]bool {
-    svcAcct1, svcAcct2, instAcct := "service-account-1", "service-account-2", "inst-account"
-	expectedAccounts := map[string]bool{ 
-	    svcAcct1: true, 
-	    svcAcct2: true, 
-	    instAcct: true }
+	svcAcct1, svcAcct2, instAcct := "service-account-1", "service-account-2", "inst-account"
+	expectedAccounts := map[string]bool{
+		svcAcct1: true,
+		svcAcct2: true,
+		instAcct: true}
 	inst.Service.ServiceAccounts = []string{svcAcct1, svcAcct2}
 	inst.ServiceAccount = instAcct
 	return expectedAccounts
@@ -655,19 +654,19 @@ func buildMockAccounts(inst *model.ServiceInstance) map[string]bool {
 
 func TestGetIstioServiceAccounts(t *testing.T) {
 	mockInstances = buildMockInstances()
-	meshView := buildMockMeshResourceView()    
-    instanceToVerify := worldSvcInst[3]	        
+	meshView := buildMockMeshResourceView()
+	instanceToVerify := worldSvcInst[3]
 	evVerifier.mockSvcEvent(platform1, instanceToVerify.Service, model.EventAdd)
 	t.Run("EmptyView", func(t *testing.T) {
-	    address := instanceToVerify.Endpoint.Address
+		address := instanceToVerify.Endpoint.Address
 		accounts := meshView.GetIstioServiceAccounts(address, []string{})
 		if len(accounts) > 0 {
 			t.Errorf("Expected 0 instances. Found: '%v'", accounts)
 		}
 	})
-    triggerAddInstanceEvents()
+	triggerAddInstanceEvents()
 	t.Run("AfterAddEmptyAddresses", func(t *testing.T) {
-	    address := instanceToVerify.Endpoint.Address
+		address := instanceToVerify.Endpoint.Address
 		accounts := meshView.GetIstioServiceAccounts(address, []string{})
 		if len(accounts) > 0 {
 			t.Errorf("Expected 0 instances. Found: '%v'", accounts)
@@ -675,20 +674,20 @@ func TestGetIstioServiceAccounts(t *testing.T) {
 	})
 	expectedAccts := buildMockAccounts(instanceToVerify)
 	t.Run("AfterAddWithAddresses", func(t *testing.T) {
-	    hostName := instanceToVerify.Service.Hostname
+		hostName := instanceToVerify.Service.Hostname
 		accounts := meshView.GetIstioServiceAccounts(hostName, []string{})
 		if len(accounts) == 0 {
 			t.Errorf("Expected service accounts '%v'. Found nothing.", expectedAccts)
 			return
 		}
 		for _, account := range accounts {
-		    if _, found := expectedAccts[account]; !found {
-    			t.Errorf("Unexpected account found: '%s'.", account)
-		    }
+			if _, found := expectedAccts[account]; !found {
+				t.Errorf("Unexpected account found: '%s'.", account)
+			}
 		}
-        if len(accounts) != len(expectedAccts) {
+		if len(accounts) != len(expectedAccts) {
 			t.Errorf("Partial list of accounts found. Expected: '%v', Actual '%v'.", expectedAccts, accounts)
-        }		
+		}
 	})
 }
 
@@ -698,21 +697,21 @@ func TestServiceByLabels(t *testing.T) {
 	evVerifier.mockSvcEvent(platform2, mock.WorldService, model.EventAdd)
 	t.Run("NonExistentLabel", func(t *testing.T) {
 		svcs := meshView.serviceByLabels(
-		    resourceLabels{
-		        resourceLabel{labelServiceName, &mock.HelloService.Hostname},
-        		resourceLabel{"some-non-existent-label", &mock.HelloService.Hostname},
-		})
+			resourceLabels{
+				resourceLabel{labelServiceName, &mock.HelloService.Hostname},
+				resourceLabel{"some-non-existent-label", &mock.HelloService.Hostname},
+			})
 		if len(svcs) != 0 {
 			t.Errorf("Expected no services. Found: '%v'", svcs)
 		}
 	})
 	t.Run("LabelVIP", func(t *testing.T) {
-	    hexAddress := getIPHex(mock.HelloService.Address)
+		hexAddress := getIPHex(mock.HelloService.Address)
 		svcs := meshView.serviceByLabels(
-		    resourceLabels{
-		        resourceLabel{labelServiceName, &mock.HelloService.Hostname},
-        		resourceLabel{labelServiceVIP, &hexAddress},
-		})
+			resourceLabels{
+				resourceLabel{labelServiceName, &mock.HelloService.Hostname},
+				resourceLabel{labelServiceVIP, &hexAddress},
+			})
 		expectServices(t, []*model.Service{mock.HelloService}, svcs)
 	})
 	extSvc := mock.MakeService("hello.default.svc.cluster.local", "10.1.0.0")
@@ -720,26 +719,26 @@ func TestServiceByLabels(t *testing.T) {
 	evVerifier.mockSvcEvent(platform2, extSvc, model.EventAdd)
 	t.Run("LabelExternalName", func(t *testing.T) {
 		svcs := meshView.serviceByLabels(
-		    resourceLabels{
-		        resourceLabel{labelServiceName, &extSvc.Hostname},
-        		resourceLabel{labelServiceExternalName, &extSvc.ExternalName},
-		})
+			resourceLabels{
+				resourceLabel{labelServiceName, &extSvc.Hostname},
+				resourceLabel{labelServiceExternalName, &extSvc.ExternalName},
+			})
 		expectServices(t, []*model.Service{extSvc}, svcs)
 	})
 	evVerifier.mockSvcEvent(platform2, extSvc, model.EventDelete)
 	t.Run("LabelExternalNameAfterDelete", func(t *testing.T) {
 		svcs := meshView.serviceByLabels(
-		    resourceLabels{
-		        resourceLabel{labelServiceName, &extSvc.Hostname},
-        		resourceLabel{labelServiceExternalName, &extSvc.ExternalName},
-		})
+			resourceLabels{
+				resourceLabel{labelServiceName, &extSvc.Hostname},
+				resourceLabel{labelServiceExternalName, &extSvc.ExternalName},
+			})
 		expectServices(t, []*model.Service{}, svcs)
 	})
 }
 
 func TestRun(t *testing.T) {
 	meshView := buildMockMeshResourceView()
-	stop := make(chan struct {})
+	stop := make(chan struct{})
 	go meshView.Run(stop)
 	var done struct{}
 	stop <- done
