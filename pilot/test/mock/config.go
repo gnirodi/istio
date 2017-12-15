@@ -16,22 +16,20 @@ package mock
 
 import (
 	"fmt"
-	"reflect"
-	"strconv"
-	"sync"
-	"testing"
-	"time"
-
 	"github.com/gogo/protobuf/types"
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/proto"
-
 	mpb "istio.io/api/mixer/v1"
 	mccpb "istio.io/api/mixer/v1/config/client"
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/model/test"
 	"istio.io/istio/pilot/test/util"
+	"reflect"
+	"strconv"
+	"sync"
+	"testing"
+	"time"
 )
 
 var (

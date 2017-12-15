@@ -17,19 +17,17 @@ package kubernetes
 import (
 	"context"
 	"errors"
+	"istio.io/istio/mixer/adapter/kubernetesenv/config"
+	kubernetes_apa_tmpl "istio.io/istio/mixer/adapter/kubernetesenv/template"
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/pkg/adapter/test"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
 	"os"
 	"reflect"
 	"testing"
 	"time"
-
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"istio.io/istio/mixer/adapter/kubernetesenv/config"
-	kubernetes_apa_tmpl "istio.io/istio/mixer/adapter/kubernetesenv/template"
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/pkg/adapter/test"
 )
 
 type fakeCache struct {

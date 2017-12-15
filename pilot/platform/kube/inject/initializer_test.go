@@ -15,14 +15,11 @@
 package inject
 
 import (
-	"io/ioutil"
-	"os"
-	"os/user"
-	"reflect"
-	"testing"
-	"time"
-
 	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"istio.io/istio/pilot/platform/kube"
+	"istio.io/istio/pilot/proxy"
+	"istio.io/istio/pilot/test/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,10 +27,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-
-	"istio.io/istio/pilot/platform/kube"
-	"istio.io/istio/pilot/proxy"
-	"istio.io/istio/pilot/test/util"
+	"os"
+	"os/user"
+	"reflect"
+	"testing"
+	"time"
 )
 
 func makeClient(t *testing.T) (*rest.Config, kubernetes.Interface) {

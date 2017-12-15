@@ -16,19 +16,17 @@ package servicecontrol
 
 import (
 	"context"
-	"reflect"
-	"testing"
-	"time"
-
 	pbtypes "github.com/gogo/protobuf/types"
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	sc "google.golang.org/api/servicecontrol/v1"
-
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	at "istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/template/quota"
+	"reflect"
+	"testing"
+	"time"
 )
 
 type quotaTest struct {

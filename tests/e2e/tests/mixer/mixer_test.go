@@ -20,7 +20,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/api"
+	"github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	"io/ioutil"
+	"istio.io/fortio/fhttp"
+	"istio.io/fortio/periodic"
+	"istio.io/istio/tests/e2e/framework"
+	"istio.io/istio/tests/util"
 	"math"
 	"net/http"
 	"os"
@@ -28,16 +36,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/api"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
-
-	"istio.io/fortio/fhttp"
-	"istio.io/fortio/periodic"
-	"istio.io/istio/tests/e2e/framework"
-	"istio.io/istio/tests/util"
 )
 
 const (

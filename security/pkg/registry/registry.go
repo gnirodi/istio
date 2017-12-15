@@ -15,9 +15,8 @@
 package registry
 
 import (
-	"sync"
-
 	"github.com/golang/glog"
+	"sync"
 )
 
 // Registry is the standard interface for identity registry implementation

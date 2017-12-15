@@ -17,10 +17,9 @@ package eureka
 import (
 	"errors"
 	"fmt"
+	"istio.io/istio/pilot/model"
 	"sort"
 	"testing"
-
-	"istio.io/istio/pilot/model"
 )
 
 type mockClient struct {

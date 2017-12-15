@@ -15,14 +15,12 @@
 package ingress
 
 import (
-	"testing"
-
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/proxy"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/proxy"
+	"testing"
 )
 
 func TestDecodeIngressRuleName(t *testing.T) {

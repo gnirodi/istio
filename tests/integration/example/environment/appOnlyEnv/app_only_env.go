@@ -16,11 +16,10 @@ package appOnlyEnv
 
 import (
 	"io/ioutil"
-	"log"
-	"os"
-
 	fortioServer "istio.io/istio/tests/integration/component/fortio_server"
 	"istio.io/istio/tests/integration/framework"
+	"log"
+	"os"
 )
 
 // AppOnlyEnv is a test environment with only fortio echo server

@@ -17,10 +17,6 @@ package servicecontrol
 import (
 	"context"
 	"errors"
-	"reflect"
-	"testing"
-	"time"
-
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	"istio.io/istio/mixer/pkg/adapter"
@@ -28,6 +24,9 @@ import (
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/template/apikey"
 	"istio.io/istio/mixer/template/quota"
+	"reflect"
+	"testing"
+	"time"
 )
 
 type mockProcessor struct {

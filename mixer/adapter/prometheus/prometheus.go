@@ -20,18 +20,16 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"istio.io/istio/mixer/adapter/prometheus/config"
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/template/metric"
 	"math"
 	"strconv"
 	"strings"
 	"time"
-
-	multierror "github.com/hashicorp/go-multierror"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"istio.io/istio/mixer/adapter/prometheus/config"
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/template/metric"
 )
 
 type (

@@ -17,10 +17,9 @@ package perf
 import (
 	"encoding/json"
 	"fmt"
+	"istio.io/istio/pkg/log"
 	"math/rand"
 	"time"
-
-	"istio.io/istio/pkg/log"
 )
 
 // Load is the load to apply on the Mixer during the perf test.

@@ -15,13 +15,11 @@
 package consul
 
 import (
+	"github.com/hashicorp/consul/api"
+	"istio.io/istio/pilot/model"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/hashicorp/consul/api"
-
-	"istio.io/istio/pilot/model"
 )
 
 const (

@@ -15,11 +15,10 @@
 package memory_test
 
 import (
-	"testing"
-
 	"istio.io/istio/pilot/adapter/config/memory"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/test/mock"
+	"testing"
 )
 
 func TestEventConsistency(t *testing.T) {

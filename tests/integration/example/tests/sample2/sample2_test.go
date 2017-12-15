@@ -16,13 +16,12 @@ package sample2
 
 import (
 	"flag"
+	mixerEnvoyEnv "istio.io/istio/tests/integration/example/environment/mixerEnvoyEnv"
+	"istio.io/istio/tests/integration/framework"
 	"log"
 	"net/http"
 	"os"
 	"testing"
-
-	mixerEnvoyEnv "istio.io/istio/tests/integration/example/environment/mixerEnvoyEnv"
-	"istio.io/istio/tests/integration/framework"
 )
 
 const (

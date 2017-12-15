@@ -17,9 +17,9 @@ package ingress
 import (
 	"errors"
 	"fmt"
-	"os"
-
 	"github.com/golang/glog"
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/platform/kube"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	betaext "k8s.io/api/extensions/v1beta1"
@@ -30,9 +30,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/ingress/core/pkg/ingress/status"
 	"k8s.io/ingress/core/pkg/ingress/store"
-
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/platform/kube"
+	"os"
 )
 
 const ingressElectionID = "istio-ingress-controller-leader"

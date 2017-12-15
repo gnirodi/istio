@@ -16,14 +16,12 @@ package modelgen
 
 import (
 	"fmt"
+	proto "github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	tmpl "istio.io/api/mixer/v1/template"
 	"regexp"
 	"strconv"
 	"strings"
-
-	proto "github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-
-	tmpl "istio.io/api/mixer/v1/template"
 )
 
 const fullProtoNameOfValueTypeEnum = "istio.mixer.v1.config.descriptor.ValueType"

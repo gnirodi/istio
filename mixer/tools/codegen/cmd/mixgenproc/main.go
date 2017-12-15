@@ -16,13 +16,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
+	interfacegen "istio.io/istio/mixer/tools/codegen/pkg/interfacegen"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/spf13/cobra"
-
-	interfacegen "istio.io/istio/mixer/tools/codegen/pkg/interfacegen"
 )
 
 func withArgs(args []string, errorf func(format string, a ...interface{})) {

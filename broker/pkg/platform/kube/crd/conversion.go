@@ -15,11 +15,9 @@
 package crd
 
 import (
-	"strings"
-
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"istio.io/istio/broker/pkg/model/config"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 // convertObject translates k8s config JSON to Broker config

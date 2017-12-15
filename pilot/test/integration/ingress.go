@@ -16,12 +16,10 @@ package main
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/golang/glog"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"istio.io/istio/pilot/platform"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 type ingress struct {

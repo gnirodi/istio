@@ -18,17 +18,15 @@ package crd
 
 import (
 	"context"
-	"sync"
-	"time"
-
 	"github.com/golang/glog"
+	"istio.io/istio/mixer/pkg/config/store"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-
-	"istio.io/istio/mixer/pkg/config/store"
+	"sync"
+	"time"
 )
 
 const (

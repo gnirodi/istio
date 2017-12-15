@@ -31,7 +31,6 @@ package interpreter
 
 import (
 	"fmt"
-
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/il"
 )

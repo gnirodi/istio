@@ -18,19 +18,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"reflect"
-	"testing"
-	"time"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
-
 	adptTmpl "istio.io/api/mixer/v1/template"
 	"istio.io/istio/mixer/pkg/adapter"
 	cpb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/config/store"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/template"
+	"reflect"
+	"testing"
+	"time"
 )
 
 type fakedispatcher struct {

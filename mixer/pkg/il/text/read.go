@@ -16,10 +16,9 @@ package text
 
 import (
 	"fmt"
+	"istio.io/istio/mixer/pkg/il"
 	"strconv"
 	"strings"
-
-	"istio.io/istio/mixer/pkg/il"
 )
 
 // ReadText parses the given il assembly text and converts it into a Program.

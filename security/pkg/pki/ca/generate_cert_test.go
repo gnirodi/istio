@@ -17,12 +17,11 @@ package ca
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"istio.io/istio/security/pkg/pki"
+	tu "istio.io/istio/security/pkg/pki/testutil"
 	"strings"
 	"testing"
 	"time"
-
-	"istio.io/istio/security/pkg/pki"
-	tu "istio.io/istio/security/pkg/pki/testutil"
 )
 
 var now = time.Now().Round(time.Second).UTC()

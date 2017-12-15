@@ -17,16 +17,14 @@ package framework
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
 	"io/ioutil"
+	"istio.io/istio/tests/util"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
-
-	"istio.io/istio/tests/util"
 )
 
 const (

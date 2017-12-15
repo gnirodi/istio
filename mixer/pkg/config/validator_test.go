@@ -19,14 +19,8 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
-	"reflect"
-	"strconv"
-	"strings"
-	"testing"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
 	listcheckerpb "istio.io/istio/mixer/pkg/aspect/config"
@@ -35,6 +29,10 @@ import (
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
 	tmpl "istio.io/istio/mixer/pkg/template"
+	"reflect"
+	"strconv"
+	"strings"
+	"testing"
 )
 
 type fakeVFinder struct {

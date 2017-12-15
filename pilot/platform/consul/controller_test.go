@@ -17,15 +17,13 @@ package consul
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/consul/api"
+	"istio.io/istio/pilot/model"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/hashicorp/consul/api"
-
-	"istio.io/istio/pilot/model"
 )
 
 var (

@@ -16,18 +16,16 @@ package inject
 
 import (
 	"bytes"
-	"os"
-	"reflect"
-	"testing"
-
 	"github.com/ghodss/yaml"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/proxy"
 	"istio.io/istio/pilot/test/util"
 	"istio.io/istio/pilot/tools/version"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"reflect"
+	"testing"
 )
 
 func TestImageName(t *testing.T) {

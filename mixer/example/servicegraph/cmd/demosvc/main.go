@@ -16,14 +16,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var requests = prometheus.NewCounterVec(

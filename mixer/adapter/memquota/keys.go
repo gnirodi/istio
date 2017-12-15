@@ -16,11 +16,10 @@ package memquota
 
 import (
 	"fmt"
+	"istio.io/istio/mixer/pkg/pool"
 	"sort"
 	"strconv"
 	"sync"
-
-	"istio.io/istio/mixer/pkg/pool"
 )
 
 // we maintain a pool of these for use by the makeKey function

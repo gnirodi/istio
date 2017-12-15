@@ -17,17 +17,15 @@ package statsd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"text/template"
-	"time"
-
 	"github.com/cactus/go-statsd-client/statsd"
 	multierror "github.com/hashicorp/go-multierror"
-
+	"io/ioutil"
 	"istio.io/istio/mixer/adapter/statsd/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/template/metric"
+	"text/template"
+	"time"
 )
 
 const (

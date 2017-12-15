@@ -22,16 +22,14 @@ package inject
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"reflect"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
+	"io"
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/proxy"
+	"istio.io/istio/pilot/tools/version"
 	v2alpha1 "k8s.io/api/batch/v2alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -40,10 +38,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	yamlDecoder "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
-
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/proxy"
-	"istio.io/istio/pilot/tools/version"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // per-sidecar policy and status (deployment, job, statefulset, pod, etc)

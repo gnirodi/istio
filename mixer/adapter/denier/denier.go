@@ -19,15 +19,13 @@ package denier // import "istio.io/istio/mixer/adapter/denier"
 
 import (
 	"context"
-	"time"
-
 	rpc "github.com/googleapis/googleapis/google/rpc"
-
 	"istio.io/istio/mixer/adapter/denier/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/template/checknothing"
 	"istio.io/istio/mixer/template/listentry"
 	"istio.io/istio/mixer/template/quota"
+	"time"
 )
 
 type handler struct {

@@ -21,19 +21,17 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"github.com/golang/sync/errgroup"
+	"github.com/gorilla/websocket"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"io/ioutil"
+	pb "istio.io/istio/pilot/test/grpcecho"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/golang/sync/errgroup"
-	"github.com/gorilla/websocket"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
-	pb "istio.io/istio/pilot/test/grpcecho"
 )
 
 var (

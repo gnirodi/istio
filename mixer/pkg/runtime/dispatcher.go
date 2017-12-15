@@ -18,10 +18,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strconv"
-	"sync"
-	"time"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	rpc "github.com/googleapis/googleapis/google/rpc"
@@ -29,7 +25,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
-
 	adptTmpl "istio.io/api/mixer/v1/template"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/aspect"
@@ -39,6 +34,9 @@ import (
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/pkg/template"
+	"strconv"
+	"sync"
+	"time"
 )
 
 // Dispatcher dispatches incoming API calls to configured adapters.

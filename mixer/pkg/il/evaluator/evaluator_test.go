@@ -17,17 +17,16 @@ package evaluator
 import (
 	"errors"
 	"fmt"
-	"math/rand"
-	"strings"
-	"sync"
-	"testing"
-	"time"
-
 	pbv "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/config/descriptor"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	ilt "istio.io/istio/mixer/pkg/il/testing"
+	"math/rand"
+	"strings"
+	"sync"
+	"testing"
+	"time"
 )
 
 func TestExpressions(t *testing.T) {

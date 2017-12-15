@@ -16,11 +16,9 @@ package framework
 
 import (
 	"flag"
-	"path/filepath"
-
 	"github.com/golang/glog"
-
 	"istio.io/istio/tests/util"
+	"path/filepath"
 )
 
 var useInitializer = flag.Bool("use_initializer", false, "Use the initializer instead of kube-inject for transparent proxy injection")

@@ -33,12 +33,11 @@ package modelgen
 import (
 	"bytes"
 	"fmt"
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"os"
 	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 )
 
 // FileDescriptorSetParser parses the FileDescriptorSetProto and creates an intermediate object that is used to

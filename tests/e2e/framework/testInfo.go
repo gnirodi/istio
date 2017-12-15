@@ -16,25 +16,23 @@ package framework
 
 import (
 	"bufio"
+	"cloud.google.com/go/storage"
 	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/google/uuid"
+	multierror "github.com/hashicorp/go-multierror"
 	"io/ioutil"
+	"istio.io/istio/tests/util"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
-
-	"cloud.google.com/go/storage"
-	"github.com/golang/glog"
-	"github.com/google/uuid"
-	multierror "github.com/hashicorp/go-multierror"
-
-	"istio.io/istio/tests/util"
 )
 
 var (

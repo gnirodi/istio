@@ -15,10 +15,9 @@
 package interpreter
 
 import (
-	"testing"
-
 	"istio.io/istio/mixer/pkg/il/testing"
 	"istio.io/istio/mixer/pkg/il/text"
+	"testing"
 )
 
 // 12/6/2017

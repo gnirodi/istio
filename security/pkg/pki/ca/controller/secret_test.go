@@ -16,16 +16,14 @@ package controller
 
 import (
 	"fmt"
-	"testing"
-	"time"
-
+	"istio.io/istio/security/pkg/pki/ca"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/fake"
 	ktesting "k8s.io/client-go/testing"
-
-	"istio.io/istio/security/pkg/pki/ca"
+	"testing"
+	"time"
 )
 
 type fakeCa struct{}

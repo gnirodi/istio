@@ -22,21 +22,19 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
-	"net"
-	"os"
-	"strings"
-	"sync"
-	"time"
-
+	"istio.io/istio/mixer/adapter/kubernetes/config"
+	"istio.io/istio/mixer/pkg/adapter"
 	"k8s.io/api/core/v1"
 	k8s "k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // needed for auth
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"istio.io/istio/mixer/adapter/kubernetes/config"
-	"istio.io/istio/mixer/pkg/adapter"
+	"net"
+	"os"
+	"strings"
+	"sync"
+	"time"
 )
 
 type (

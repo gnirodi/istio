@@ -16,11 +16,9 @@ package cmd
 
 import (
 	"context"
-
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/spf13/cobra"
-
 	mixerpb "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/cmd/shared"
 )

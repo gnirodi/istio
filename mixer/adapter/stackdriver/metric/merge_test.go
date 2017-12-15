@@ -16,19 +16,17 @@ package metric
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/genproto/googleapis/api/distribution"
 	"google.golang.org/genproto/googleapis/api/metric"
 	"google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoring "google.golang.org/genproto/googleapis/monitoring/v3"
-
 	"istio.io/istio/mixer/pkg/adapter/test"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
 )
 
 var (

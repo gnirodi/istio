@@ -16,7 +16,6 @@ package adapter
 
 import (
 	"fmt"
-
 	me "github.com/hashicorp/go-multierror"
 )
 

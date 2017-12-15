@@ -17,12 +17,7 @@ package adapterManager
 import (
 	"context"
 	"errors"
-	"strings"
-	"testing"
-	"time"
-
 	rpc "github.com/googleapis/googleapis/google/rpc"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/aspect"
 	"istio.io/istio/mixer/pkg/attribute"
@@ -32,6 +27,9 @@ import (
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/status"
+	"strings"
+	"testing"
+	"time"
 )
 
 type (

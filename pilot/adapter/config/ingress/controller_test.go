@@ -15,21 +15,19 @@
 package ingress
 
 import (
-	"reflect"
-	"testing"
-	"time"
-
-	"k8s.io/api/extensions/v1beta1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/kubernetes/fake"
-
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform/kube"
 	"istio.io/istio/pilot/proxy"
 	"istio.io/istio/pilot/test/mock"
 	"istio.io/istio/pilot/test/util"
+	"k8s.io/api/extensions/v1beta1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes/fake"
+	"reflect"
+	"testing"
+	"time"
 )
 
 const (

@@ -17,15 +17,13 @@ package attribute
 import (
 	"bytes"
 	"fmt"
+	"github.com/golang/glog"
+	me "github.com/hashicorp/go-multierror"
+	mixerpb "istio.io/api/mixer/v1"
+	"istio.io/istio/mixer/pkg/pool"
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/golang/glog"
-	me "github.com/hashicorp/go-multierror"
-
-	mixerpb "istio.io/api/mixer/v1"
-	"istio.io/istio/mixer/pkg/pool"
 )
 
 // MutableBag is a generic mechanism to read and write a set of attributes.

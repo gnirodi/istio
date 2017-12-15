@@ -16,16 +16,14 @@ package proxy
 
 import (
 	"errors"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/ptypes"
 	multierror "github.com/hashicorp/go-multierror"
-
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/model"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Environment provides an aggregate environmental API for Pilot

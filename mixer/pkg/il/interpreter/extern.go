@@ -15,10 +15,9 @@
 package interpreter
 
 import (
+	"istio.io/istio/mixer/pkg/il"
 	"reflect"
 	"time"
-
-	"istio.io/istio/mixer/pkg/il"
 )
 
 // Extern represents an external, native function that is callable from within the interpreter,

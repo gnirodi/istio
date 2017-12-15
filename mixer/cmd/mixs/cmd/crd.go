@@ -16,15 +16,13 @@ package cmd
 
 import (
 	"bytes"
-	"sort"
-	gotemplate "text/template"
-
 	"github.com/spf13/cobra"
-
 	"istio.io/istio/mixer/cmd/shared"
 	"istio.io/istio/mixer/pkg/adapter"
 	mixerRuntime "istio.io/istio/mixer/pkg/runtime"
 	"istio.io/istio/mixer/pkg/template"
+	"sort"
+	gotemplate "text/template"
 )
 
 // Group is the K8s API group.

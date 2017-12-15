@@ -16,14 +16,13 @@ package store
 
 import (
 	"fmt"
+	"github.com/golang/glog"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/golang/glog"
 )
 
 // fsStore implements file system KeyValueStore and change store.

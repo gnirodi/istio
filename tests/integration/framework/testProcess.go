@@ -15,9 +15,8 @@
 package framework
 
 import (
-	"os"
-
 	"istio.io/istio/tests/util"
+	"os"
 )
 
 // TestProcess is a wrap of os.Process

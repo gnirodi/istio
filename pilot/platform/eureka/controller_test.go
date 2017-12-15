@@ -15,11 +15,10 @@
 package eureka
 
 import (
+	"istio.io/istio/pilot/model"
 	"sync"
 	"testing"
 	"time"
-
-	"istio.io/istio/pilot/model"
 )
 
 const (

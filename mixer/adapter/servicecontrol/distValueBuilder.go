@@ -16,9 +16,8 @@ package servicecontrol
 
 import (
 	"errors"
-	"math"
-
 	sc "google.golang.org/api/servicecontrol/v1"
+	"math"
 )
 
 type (

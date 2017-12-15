@@ -16,10 +16,8 @@ package aspect
 
 import (
 	"fmt"
-
 	"github.com/golang/glog"
 	rpc "github.com/googleapis/googleapis/google/rpc"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
 	aconfig "istio.io/istio/mixer/pkg/aspect/config"

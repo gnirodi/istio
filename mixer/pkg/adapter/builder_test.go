@@ -15,9 +15,8 @@
 package adapter
 
 import (
-	"testing"
-
 	rpc "github.com/googleapis/googleapis/google/rpc"
+	"testing"
 )
 
 func TestDefaultBuilder(t *testing.T) {

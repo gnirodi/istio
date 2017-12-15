@@ -20,17 +20,12 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
-	"sync"
-	"sync/atomic"
-	"time"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/aspect"
 	"istio.io/istio/mixer/pkg/attribute"
@@ -40,6 +35,9 @@ import (
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/status"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
 const (

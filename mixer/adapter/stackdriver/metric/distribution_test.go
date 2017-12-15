@@ -16,9 +16,8 @@ package metric
 
 import (
 	"fmt"
-	"testing"
-
 	"google.golang.org/genproto/googleapis/api/distribution"
+	"testing"
 )
 
 func TestIndex(t *testing.T) {

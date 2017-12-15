@@ -15,11 +15,10 @@
 package crd
 
 import (
-	"reflect"
-	"testing"
-
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/test/mock"
+	"reflect"
+	"testing"
 )
 
 var (

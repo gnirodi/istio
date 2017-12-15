@@ -16,11 +16,10 @@ package runtime
 
 import (
 	"context"
-	"reflect"
-	"testing"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/attribute"
+	"reflect"
+	"testing"
 )
 
 func TestNewContextWithRequestData(t *testing.T) {

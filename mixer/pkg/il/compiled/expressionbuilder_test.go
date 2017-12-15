@@ -15,10 +15,9 @@
 package compiled
 
 import (
-	"testing"
-
 	"istio.io/istio/mixer/pkg/config/descriptor"
 	"istio.io/istio/mixer/pkg/il/testing"
+	"testing"
 )
 
 func TestCompiledExpressions(t *testing.T) {

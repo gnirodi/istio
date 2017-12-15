@@ -17,17 +17,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/spf13/cobra"
-
+	"io/ioutil"
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/cmd"
 	"istio.io/istio/pilot/model"
@@ -35,6 +29,10 @@ import (
 	"istio.io/istio/pilot/proxy"
 	"istio.io/istio/pilot/proxy/envoy"
 	"istio.io/istio/pilot/tools/version"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 var (

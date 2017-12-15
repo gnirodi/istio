@@ -16,16 +16,14 @@ package servicecontrol
 
 import (
 	"context"
-	"reflect"
-	"testing"
-	"time"
-
 	"google.golang.org/api/googleapi"
 	sc "google.golang.org/api/servicecontrol/v1"
-
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	at "istio.io/istio/mixer/pkg/adapter/test"
+	"reflect"
+	"testing"
+	"time"
 )
 
 type reportTest struct {

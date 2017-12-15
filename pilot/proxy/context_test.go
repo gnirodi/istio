@@ -16,12 +16,11 @@ package proxy_test
 
 import (
 	"fmt"
-	"reflect"
-	"testing"
-
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/proxy"
 	"istio.io/istio/pilot/test/mock"
+	"reflect"
+	"testing"
 )
 
 func TestServiceNode(t *testing.T) {

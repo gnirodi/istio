@@ -18,11 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"sync"
-
 	sc "google.golang.org/api/servicecontrol/v1"
-
+	"io"
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	"istio.io/istio/mixer/pkg/adapter"
@@ -30,6 +27,7 @@ import (
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/template/apikey"
 	"istio.io/istio/mixer/template/quota"
+	"sync"
 )
 
 type (

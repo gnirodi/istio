@@ -25,12 +25,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"time"
-
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
+	"io/ioutil"
+	"istio.io/istio/mixer/pkg/config/store"
 	"k8s.io/api/admission/v1alpha1"
 	admissionregistrationv1alpha1 "k8s.io/api/admissionregistration/v1alpha1"
 	"k8s.io/api/core/v1"
@@ -42,8 +40,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	admissionClient "k8s.io/client-go/kubernetes/typed/admissionregistration/v1alpha1"
 	"k8s.io/client-go/tools/cache"
-
-	"istio.io/istio/mixer/pkg/config/store"
+	"net/http"
+	"time"
 )
 
 const (

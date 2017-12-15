@@ -17,16 +17,14 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
-	"os"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"k8s.io/api/core/v1"
-
+	"io"
 	"istio.io/istio/pilot/platform/kube"
 	"istio.io/istio/pilot/platform/kube/inject"
 	"istio.io/istio/pilot/tools/version"
+	"k8s.io/api/core/v1"
+	"os"
 )
 
 var (

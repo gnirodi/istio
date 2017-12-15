@@ -15,12 +15,9 @@
 package metric
 
 import (
+	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"context"
 	"fmt"
-	"sync"
-	"time"
-
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"github.com/golang/protobuf/ptypes"
 	gax "github.com/googleapis/gax-go"
 	xcontext "golang.org/x/net/context"
@@ -28,12 +25,13 @@ import (
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	"google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
-
 	descriptor "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/adapter/stackdriver/config"
 	"istio.io/istio/mixer/adapter/stackdriver/helper"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/template/metric"
+	"sync"
+	"time"
 )
 
 // TODO: implement adapter validation

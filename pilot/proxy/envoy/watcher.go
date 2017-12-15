@@ -18,19 +18,17 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/golang/glog"
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/howeyc/fsnotify"
 	"hash"
 	"io/ioutil"
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/proxy"
 	"os"
 	"os/exec"
 	"path"
 	"time"
-
-	"github.com/golang/glog"
-	multierror "github.com/hashicorp/go-multierror"
-	"github.com/howeyc/fsnotify"
-
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/proxy"
 )
 
 // Watcher triggers reloads on changes to the proxy config

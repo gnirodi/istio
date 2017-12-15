@@ -16,11 +16,10 @@ package envoy
 
 import (
 	"fmt"
-	"regexp"
-	"sort"
-
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model"
+	"regexp"
+	"sort"
 )
 
 func buildHTTPRouteMatch(matches *routing.MatchCondition) *HTTPRoute {

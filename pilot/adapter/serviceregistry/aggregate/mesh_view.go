@@ -18,13 +18,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net"
-	"sync"
-
 	"github.com/golang/glog"
-
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform"
+	"net"
+	"sync"
 )
 
 const (
@@ -368,7 +366,7 @@ func (v *MeshResourceView) handleServiceInstance(k resourceKey, i *model.Service
 		v.serviceInstanceLabels.addLabel(k, labelServiceName, i.Service.Hostname)
 		v.serviceInstanceLabels.addLabel(k, labelInstanceIP, getIPHex(i.Endpoint.Address))
 		v.serviceInstanceLabels.addLabel(k, labelInstancePort, getPortHex(i.Endpoint.Port))
-		if i.Endpoint.ServicePort.Name != "" {
+		if i.Endpoint.ServicePort != nil && i.Endpoint.ServicePort.Name != "" {
 			v.serviceInstanceLabels.addLabel(k, labelInstanceNamedPort, i.Endpoint.ServicePort.Name)
 		}
 		for label, value := range i.Labels {

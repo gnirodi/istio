@@ -29,21 +29,19 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/platform/kube"
+	"k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/tools/cache"
-
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/platform/kube"
 )
 
 var (

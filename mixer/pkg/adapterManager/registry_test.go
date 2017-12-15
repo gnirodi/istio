@@ -17,11 +17,10 @@ package adapterManager
 import (
 	"errors"
 	"flag"
-	"reflect"
-	"testing"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config"
+	"reflect"
+	"testing"
 )
 
 type testBuilder struct {

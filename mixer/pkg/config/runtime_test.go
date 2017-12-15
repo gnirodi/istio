@@ -18,15 +18,13 @@ import (
 	"errors"
 	"flag"
 	//"fmt"
+	multierror "github.com/hashicorp/go-multierror"
+	"istio.io/istio/mixer/pkg/attribute"
+	pb "istio.io/istio/mixer/pkg/config/proto"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
-
-	multierror "github.com/hashicorp/go-multierror"
-
-	"istio.io/istio/mixer/pkg/attribute"
-	pb "istio.io/istio/mixer/pkg/config/proto"
 )
 
 type trueEval struct {

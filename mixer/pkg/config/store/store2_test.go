@@ -17,14 +17,12 @@ package store
 import (
 	"context"
 	"errors"
+	"github.com/gogo/protobuf/proto"
+	cfg "istio.io/istio/mixer/pkg/config/proto"
 	"net/url"
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/gogo/protobuf/proto"
-
-	cfg "istio.io/istio/mixer/pkg/config/proto"
 )
 
 type testStore struct {

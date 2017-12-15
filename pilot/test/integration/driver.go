@@ -21,24 +21,22 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"strconv"
-	"strings"
-	"text/template"
-	"time"
-
 	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/glog"
 	"github.com/golang/sync/errgroup"
 	multierror "github.com/hashicorp/go-multierror"
-	"k8s.io/client-go/kubernetes"
-
+	"io/ioutil"
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/platform"
 	"istio.io/istio/pilot/platform/kube"
 	"istio.io/istio/pilot/platform/kube/inject"
 	"istio.io/istio/pilot/test/util"
+	"k8s.io/client-go/kubernetes"
+	"os"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
 )
 
 var (

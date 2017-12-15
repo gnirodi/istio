@@ -16,7 +16,6 @@ package evaluator
 
 import (
 	"fmt"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/il/runtime"

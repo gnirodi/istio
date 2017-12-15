@@ -16,15 +16,13 @@ package model_test
 
 import (
 	"errors"
-	"reflect"
-	"testing"
-
 	"github.com/davecgh/go-spew/spew"
-
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/adapter/config/memory"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/test/mock"
+	"reflect"
+	"testing"
 )
 
 func TestConfigDescriptor(t *testing.T) {

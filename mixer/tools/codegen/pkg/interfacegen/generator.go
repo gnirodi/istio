@@ -17,19 +17,17 @@ package interfacegen
 import (
 	"bytes"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"go/format"
+	"golang.org/x/tools/imports"
 	"io/ioutil"
+	tmpl "istio.io/istio/mixer/tools/codegen/pkg/interfacegen/template"
+	"istio.io/istio/mixer/tools/codegen/pkg/modelgen"
 	"os"
 	"regexp"
 	"strings"
 	"text/template"
-
-	"github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"golang.org/x/tools/imports"
-
-	tmpl "istio.io/istio/mixer/tools/codegen/pkg/interfacegen/template"
-	"istio.io/istio/mixer/tools/codegen/pkg/modelgen"
 )
 
 const (

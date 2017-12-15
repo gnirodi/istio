@@ -18,19 +18,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net"
-	"time"
-
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-
 	"istio.io/istio/security/pkg/pki"
 	"istio.io/istio/security/pkg/pki/ca"
 	"istio.io/istio/security/pkg/registry"
 	pb "istio.io/istio/security/proto"
+	"net"
+	"time"
 )
 
 const certExpirationBuffer = time.Minute

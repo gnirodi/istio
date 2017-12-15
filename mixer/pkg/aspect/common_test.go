@@ -16,10 +16,6 @@ package aspect
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
-	"testing"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/adapter/noopLegacy"
 	"istio.io/istio/mixer/pkg/adapter"
@@ -28,6 +24,9 @@ import (
 	"istio.io/istio/mixer/pkg/config"
 	cfgpb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/il/evaluator"
+	"reflect"
+	"strings"
+	"testing"
 )
 
 func TestEvalAll(t *testing.T) {

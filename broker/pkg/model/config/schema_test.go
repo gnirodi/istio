@@ -15,12 +15,10 @@
 package config
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	brokerconfig "istio.io/api/broker/v1/config"
 	"reflect"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
-
-	brokerconfig "istio.io/api/broker/v1/config"
 )
 
 func TestProtoSchemaConversions(t *testing.T) {

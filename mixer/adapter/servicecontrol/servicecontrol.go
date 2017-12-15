@@ -18,10 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	pbtypes "github.com/gogo/protobuf/types"
 	multierror "github.com/hashicorp/go-multierror"
-
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	"istio.io/istio/mixer/pkg/adapter"

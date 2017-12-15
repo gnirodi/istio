@@ -15,14 +15,12 @@
 package kube
 
 import (
-	"reflect"
-	"testing"
-
+	"istio.io/istio/security/pkg/registry"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-
-	"istio.io/istio/security/pkg/registry"
+	"reflect"
+	"testing"
 )
 
 func createServiceAccount(name, namespace string) *v1.ServiceAccount {

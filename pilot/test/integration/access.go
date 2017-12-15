@@ -16,13 +16,11 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"sync"
-
 	"github.com/golang/glog"
-
 	"istio.io/istio/pilot/platform/kube/inject"
 	"istio.io/istio/pilot/test/util"
+	"strings"
+	"sync"
 )
 
 // envoy access log testing utilities

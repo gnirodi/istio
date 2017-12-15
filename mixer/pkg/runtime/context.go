@@ -16,7 +16,6 @@ package runtime
 
 import (
 	"context"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/attribute"
 )

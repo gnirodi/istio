@@ -17,15 +17,14 @@ package sample1
 import (
 	"bytes"
 	"flag"
+	appOnlyEnv "istio.io/istio/tests/integration/example/environment/appOnlyEnv"
+	mixerEnvoyEnv "istio.io/istio/tests/integration/example/environment/mixerEnvoyEnv"
+	"istio.io/istio/tests/integration/framework"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
-
-	appOnlyEnv "istio.io/istio/tests/integration/example/environment/appOnlyEnv"
-	mixerEnvoyEnv "istio.io/istio/tests/integration/example/environment/mixerEnvoyEnv"
-	"istio.io/istio/tests/integration/framework"
 )
 
 const (

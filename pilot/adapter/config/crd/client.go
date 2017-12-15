@@ -18,8 +18,6 @@ package crd
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -30,15 +28,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"time"
 	// import GKE cluster authentication plugin
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	// import OIDC cluster authentication plugin, e.g. for Tectonic
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/platform/kube"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/platform/kube"
 )
 
 // IstioAPIGroupVersion defines schema.GroupVersion for Istio configuration

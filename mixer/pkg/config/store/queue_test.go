@@ -17,12 +17,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
+	cfg "istio.io/istio/mixer/pkg/config/proto"
 	"testing"
 	"time"
-
-	"github.com/gogo/protobuf/proto"
-
-	cfg "istio.io/istio/mixer/pkg/config/proto"
 )
 
 func TestQueue(t *testing.T) {

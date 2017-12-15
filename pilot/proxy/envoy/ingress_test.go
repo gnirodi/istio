@@ -15,12 +15,10 @@
 package envoy
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	"istio.io/istio/pilot/model"
 	"reflect"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
-
-	"istio.io/istio/pilot/model"
 )
 
 func addIngressRoutes(r model.ConfigStore, t *testing.T) {

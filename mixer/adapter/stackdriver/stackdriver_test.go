@@ -16,13 +16,12 @@ package stackdriver
 
 import (
 	"context"
-	"testing"
-
 	"istio.io/istio/mixer/adapter/stackdriver/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/template/logentry"
 	"istio.io/istio/mixer/template/metric"
+	"testing"
 )
 
 type (

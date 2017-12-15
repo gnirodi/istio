@@ -15,16 +15,14 @@
 package servicecontrol
 
 import (
-	"reflect"
-	"testing"
-
 	pbtypes "github.com/gogo/protobuf/types"
-
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	at "istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/template/apikey"
 	"istio.io/istio/mixer/template/quota"
+	"reflect"
+	"testing"
 )
 
 func TestInitializeHandlerContext(t *testing.T) {

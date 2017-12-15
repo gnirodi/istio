@@ -16,10 +16,8 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
-
 	pbd "istio.io/api/mixer/v1/config/descriptor"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
