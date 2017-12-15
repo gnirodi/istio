@@ -16,9 +16,10 @@ package list
 
 import (
 	"fmt"
-	"github.com/ghodss/yaml"
 	"net"
 	"strings"
+
+	"github.com/ghodss/yaml"
 )
 
 type (

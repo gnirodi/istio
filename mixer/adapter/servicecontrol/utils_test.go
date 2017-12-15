@@ -16,11 +16,12 @@ package servicecontrol
 
 import (
 	"encoding/json"
+	"testing"
+	"time"
+
 	pbtypes "github.com/gogo/protobuf/types"
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	sc "google.golang.org/api/servicecontrol/v1"
-	"testing"
-	"time"
 )
 
 type testMarshaller struct{}

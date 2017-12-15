@@ -16,11 +16,12 @@ package descriptor
 
 import (
 	"fmt"
-	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"math"
 	"strconv"
 	"strings"
 	"testing"
+
+	dpb "istio.io/api/mixer/v1/config/descriptor"
 )
 
 func TestValidateLogEntry(t *testing.T) {

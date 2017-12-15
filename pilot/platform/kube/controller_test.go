@@ -16,19 +16,21 @@ package kube
 
 import (
 	"fmt"
-	"github.com/golang/glog"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/test/util"
-	"k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
 	"os"
 	"os/user"
 	"reflect"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/golang/glog"
+	"k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
+
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/test/util"
 )
 
 func makeClient(t *testing.T) kubernetes.Interface {

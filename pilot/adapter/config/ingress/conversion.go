@@ -16,16 +16,18 @@ package ingress
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
+	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform/kube"
-	"k8s.io/api/extensions/v1beta1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"strconv"
-	"strings"
 )
 
 func convertIngress(ingress v1beta1.Ingress, domainSuffix string) []model.Config {

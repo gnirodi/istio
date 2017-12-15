@@ -16,14 +16,15 @@ package memquota
 
 import (
 	"context"
-	"istio.io/istio/mixer/adapter/memquota/config"
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/pkg/adapter/test"
-	"istio.io/istio/mixer/template/quota"
 	"net"
 	"strconv"
 	"testing"
 	"time"
+
+	"istio.io/istio/mixer/adapter/memquota/config"
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/pkg/adapter/test"
+	"istio.io/istio/mixer/template/quota"
 )
 
 func TestBasic(t *testing.T) {

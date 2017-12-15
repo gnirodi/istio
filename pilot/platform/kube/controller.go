@@ -17,16 +17,18 @@ package kube
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"time"
+
 	"github.com/golang/glog"
-	"istio.io/istio/pilot/model"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"reflect"
-	"time"
+
+	"istio.io/istio/pilot/model"
 )
 
 const (

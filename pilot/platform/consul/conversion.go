@@ -16,10 +16,12 @@ package consul
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/golang/glog"
 	"github.com/hashicorp/consul/api"
+
 	"istio.io/istio/pilot/model"
-	"strings"
 )
 
 const (

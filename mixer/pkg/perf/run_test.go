@@ -16,9 +16,10 @@ package perf
 
 import (
 	"fmt"
+	"testing"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/template"
-	"testing"
 )
 
 type mockB struct {

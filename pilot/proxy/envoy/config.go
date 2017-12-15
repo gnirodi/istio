@@ -19,18 +19,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/golang/glog"
-	multierror "github.com/hashicorp/go-multierror"
 	"io"
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	routing "istio.io/api/routing/v1alpha1"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/proxy"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	multierror "github.com/hashicorp/go-multierror"
+
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	routing "istio.io/api/routing/v1alpha1"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/proxy"
 )
 
 // Config generation main functions.

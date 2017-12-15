@@ -20,9 +20,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"istio.io/istio/mixer/example/servicegraph"
 	"strings"
 	"text/template"
+
+	"istio.io/istio/mixer/example/servicegraph"
 )
 
 var htmlTmpl = `<!DOCTYPE html>

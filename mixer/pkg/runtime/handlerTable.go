@@ -18,12 +18,14 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"io"
+	"sort"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
-	"io"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	cpb "istio.io/istio/mixer/pkg/config/proto"
-	"sort"
 )
 
 // handlerTable initializes and maintains handlers.

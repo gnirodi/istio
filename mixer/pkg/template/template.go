@@ -17,8 +17,10 @@ package template
 import (
 	"context"
 	"fmt"
+
 	"github.com/gogo/protobuf/proto"
 	multierror "github.com/hashicorp/go-multierror"
+
 	pb "istio.io/api/mixer/v1/config/descriptor"
 	adptTmpl "istio.io/api/mixer/v1/template"
 	"istio.io/istio/mixer/pkg/adapter"

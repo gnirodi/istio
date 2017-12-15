@@ -16,10 +16,12 @@ package interpreter
 
 import (
 	"fmt"
-	"github.com/golang/glog"
-	"istio.io/istio/mixer/pkg/il"
 	"math"
 	"time"
+
+	"github.com/golang/glog"
+
+	"istio.io/istio/mixer/pkg/il"
 )
 
 // Result contains the result of an evaluation performed by the interpreter.

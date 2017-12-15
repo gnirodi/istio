@@ -17,19 +17,21 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	rpc "github.com/googleapis/googleapis/google/rpc"
-	otgrpc "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	ot "github.com/opentracing/opentracing-go"
-	"google.golang.org/grpc"
-	mixerpb "istio.io/api/mixer/v1"
-	"istio.io/istio/mixer/cmd/shared"
-	"istio.io/istio/mixer/pkg/attribute"
-	"istio.io/istio/mixer/pkg/tracing"
 	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	rpc "github.com/googleapis/googleapis/google/rpc"
+	otgrpc "github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	ot "github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc"
+
+	mixerpb "istio.io/api/mixer/v1"
+	"istio.io/istio/mixer/cmd/shared"
+	"istio.io/istio/mixer/pkg/attribute"
+	"istio.io/istio/mixer/pkg/tracing"
 )
 
 type clientState struct {

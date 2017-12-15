@@ -16,8 +16,11 @@ package aspect
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/golang/glog"
 	rpc "github.com/googleapis/googleapis/google/rpc"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	apb "istio.io/istio/mixer/pkg/aspect/config"
 	"istio.io/istio/mixer/pkg/attribute"
@@ -26,7 +29,6 @@ import (
 	cpb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/status"
-	"net"
 )
 
 type (

@@ -16,9 +16,10 @@ package kube
 
 import (
 	"errors"
-	"istio.io/istio/pilot/model"
 	"testing"
 	"time"
+
+	"istio.io/istio/pilot/model"
 )
 
 func TestQueue(t *testing.T) {

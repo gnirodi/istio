@@ -20,10 +20,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"golang.org/x/tools/imports"
 	"io"
 	"sort"
 	"text/template"
+
+	"golang.org/x/tools/imports"
 )
 
 var inventoryTmpl = `// Copyright 2017 Istio Authors

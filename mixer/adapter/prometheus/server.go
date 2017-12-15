@@ -18,11 +18,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"istio.io/istio/mixer/pkg/adapter"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"istio.io/istio/mixer/pkg/adapter"
 )
 
 type (

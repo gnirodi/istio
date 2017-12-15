@@ -18,11 +18,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
-	multierror "github.com/hashicorp/go-multierror"
 	"io/ioutil"
-	"istio.io/istio/tests/e2e/framework"
-	"istio.io/istio/tests/util"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,6 +26,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/golang/glog"
+	multierror "github.com/hashicorp/go-multierror"
+
+	"istio.io/istio/tests/e2e/framework"
+	"istio.io/istio/tests/util"
 )
 
 const (

@@ -15,13 +15,15 @@
 package metric
 
 import (
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"context"
-	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"io"
-	"istio.io/istio/mixer/pkg/adapter"
 	"sync"
 	"time"
+
+	monitoring "cloud.google.com/go/monitoring/apiv3"
+	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
+
+	"istio.io/istio/mixer/pkg/adapter"
 )
 
 // Abstracts over the specific impl for testing.

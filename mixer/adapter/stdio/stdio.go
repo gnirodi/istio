@@ -17,16 +17,18 @@ package stdio // import "istio.io/istio/mixer/adapter/stdio"
 import (
 	"context"
 	"fmt"
+	"net"
+	"sort"
+	"time"
+
 	multierror "github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
 	"istio.io/istio/mixer/adapter/stdio/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/template/logentry"
 	"istio.io/istio/mixer/template/metric"
-	"net"
-	"sort"
-	"time"
 )
 
 type (

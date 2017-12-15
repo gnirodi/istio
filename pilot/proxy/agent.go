@@ -17,10 +17,11 @@ package proxy
 import (
 	"context"
 	"errors"
-	"github.com/golang/glog"
-	"golang.org/x/time/rate"
 	"reflect"
 	"time"
+
+	"github.com/golang/glog"
+	"golang.org/x/time/rate"
 )
 
 // Agent manages the restarts and the life cycle of a proxy binary.  Agent

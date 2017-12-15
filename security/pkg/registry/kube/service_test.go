@@ -15,13 +15,15 @@
 package kube
 
 import (
-	"istio.io/istio/pilot/platform/kube"
-	"istio.io/istio/security/pkg/registry"
+	"reflect"
+	"testing"
+
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"reflect"
-	"testing"
+
+	"istio.io/istio/pilot/platform/kube"
+	"istio.io/istio/security/pkg/registry"
 )
 
 func createService(svcAcct string) *v1.Service {

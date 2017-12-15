@@ -16,15 +16,17 @@ package e2e
 
 import (
 	"context"
+	"strconv"
+	"testing"
+
 	"google.golang.org/grpc"
+
 	istio_mixer_v1 "istio.io/api/mixer/v1"
 	pb "istio.io/api/mixer/v1/config/descriptor"
 	testEnv "istio.io/istio/mixer/pkg/server"
 	spyAdapter "istio.io/istio/mixer/test/spyAdapter"
 	e2eTmpl "istio.io/istio/mixer/test/spyAdapter/template"
 	reportTmpl "istio.io/istio/mixer/test/spyAdapter/template/report"
-	"strconv"
-	"testing"
 )
 
 const (

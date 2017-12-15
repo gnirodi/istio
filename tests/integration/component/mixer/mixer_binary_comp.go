@@ -17,12 +17,13 @@ package mixer
 import (
 	"flag"
 	"fmt"
-	"istio.io/istio/tests/integration/framework"
-	"istio.io/istio/tests/util"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"istio.io/istio/tests/integration/framework"
+	"istio.io/istio/tests/util"
 )
 
 const (

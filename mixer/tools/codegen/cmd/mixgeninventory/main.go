@@ -16,10 +16,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"istio.io/istio/mixer/tools/codegen/pkg/inventory"
 	"os"
 	"strings"
+
+	"github.com/spf13/cobra"
+
+	"istio.io/istio/mixer/tools/codegen/pkg/inventory"
 )
 
 func withArgs(args []string, errorf func(format string, a ...interface{})) {

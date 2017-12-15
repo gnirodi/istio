@@ -16,16 +16,18 @@ package e2e
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io"
+	"log"
+	"reflect"
+	"testing"
+
+	"github.com/davecgh/go-spew/spew"
+
 	istio_mixer_v1 "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/template"
 	"istio.io/istio/mixer/test/spyAdapter"
-	"log"
-	"reflect"
-	"testing"
 )
 
 // ConstructAdapterInfos constructs spyAdapters for each of the adptBehavior. It returns

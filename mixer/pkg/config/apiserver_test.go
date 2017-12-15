@@ -19,17 +19,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	rpc "github.com/googleapis/googleapis/google/rpc"
 	"io"
 	"io/ioutil"
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/pkg/config/descriptor"
-	pb "istio.io/istio/mixer/pkg/config/proto"
-	"istio.io/istio/mixer/pkg/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	rpc "github.com/googleapis/googleapis/google/rpc"
+
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/pkg/config/descriptor"
+	pb "istio.io/istio/mixer/pkg/config/proto"
+	"istio.io/istio/mixer/pkg/template"
 )
 
 func makeAPIRequest(handler http.Handler, method, url string, data []byte, t *testing.T) (int, []byte) {

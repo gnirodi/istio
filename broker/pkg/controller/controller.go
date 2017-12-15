@@ -18,10 +18,12 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/golang/glog"
+
 	"istio.io/istio/broker/pkg/model/config"
 	"istio.io/istio/broker/pkg/model/osb"
-	"net/http"
 )
 
 // Controller data

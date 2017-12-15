@@ -15,12 +15,14 @@
 package platform
 
 import (
-	"cloud.google.com/go/compute/metadata"
 	"fmt"
+
+	"cloud.google.com/go/compute/metadata"
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
 	cred "istio.io/istio/security/pkg/credential"
 )
 

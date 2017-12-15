@@ -16,9 +16,11 @@ package consul
 
 import (
 	"fmt"
-	"github.com/hashicorp/consul/api"
-	"istio.io/istio/pilot/model"
 	"testing"
+
+	"github.com/hashicorp/consul/api"
+
+	"istio.io/istio/pilot/model"
 )
 
 var (

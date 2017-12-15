@@ -16,10 +16,11 @@ package status
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/gogo/protobuf/proto"
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	multierror "github.com/hashicorp/go-multierror"
-	"testing"
 )
 
 func TestStatus(t *testing.T) {

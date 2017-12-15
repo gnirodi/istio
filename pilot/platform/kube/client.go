@@ -17,12 +17,13 @@ package kube
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
 	// import GKE cluster authentication plugin
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	// import OIDC cluster authentication plugin, e.g. for Tectonic

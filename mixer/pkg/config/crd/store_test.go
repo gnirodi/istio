@@ -17,7 +17,12 @@ package crd
 import (
 	"context"
 	"errors"
-	"istio.io/istio/mixer/pkg/config/store"
+	"reflect"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,11 +32,8 @@ import (
 	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
-	"reflect"
-	"sync"
-	"sync/atomic"
-	"testing"
-	"time"
+
+	"istio.io/istio/mixer/pkg/config/store"
 )
 
 // The "retryTimeout" used by the test.

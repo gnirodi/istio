@@ -15,10 +15,12 @@
 package crd_test
 
 import (
-	"istio.io/istio/pilot/adapter/config/crd"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"testing"
+
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"istio.io/istio/pilot/adapter/config/crd"
 )
 
 func TestKind(t *testing.T) {

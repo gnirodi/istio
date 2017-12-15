@@ -16,10 +16,11 @@ package framework
 
 import (
 	"flag"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"sync"
+
+	"github.com/golang/glog"
 )
 
 var (

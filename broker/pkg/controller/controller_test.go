@@ -15,13 +15,15 @@
 package controller
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/mock/gomock"
+
 	brokerconfig "istio.io/api/broker/v1/config"
 	"istio.io/istio/broker/pkg/model/config"
 	"istio.io/istio/broker/pkg/model/osb"
-	"reflect"
-	"testing"
 )
 
 type testStore struct {

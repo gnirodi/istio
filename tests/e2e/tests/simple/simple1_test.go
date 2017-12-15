@@ -26,16 +26,18 @@ package simple
 
 import (
 	"flag"
-	"github.com/golang/glog"
 	"io/ioutil"
-	"istio.io/fortio/fhttp"
-	"istio.io/istio/tests/e2e/framework"
-	"istio.io/istio/tests/util"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/golang/glog"
+
+	"istio.io/fortio/fhttp"
+	"istio.io/istio/tests/e2e/framework"
+	"istio.io/istio/tests/util"
 )
 
 const (

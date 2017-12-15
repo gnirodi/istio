@@ -17,17 +17,6 @@ package model
 import (
 	"errors"
 	"fmt"
-	gogoproto "github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/types"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/duration"
-	multierror "github.com/hashicorp/go-multierror"
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	mpb "istio.io/api/mixer/v1"
-	mccpb "istio.io/api/mixer/v1/config/client"
-	routing "istio.io/api/routing/v1alpha1"
-	routingv2 "istio.io/api/routing/v1alpha2"
 	"net"
 	"net/http"
 	"net/url"
@@ -35,6 +24,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	gogoproto "github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/duration"
+	multierror "github.com/hashicorp/go-multierror"
+
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	mpb "istio.io/api/mixer/v1"
+	mccpb "istio.io/api/mixer/v1/config/client"
+	routing "istio.io/api/routing/v1alpha1"
+	routingv2 "istio.io/api/routing/v1alpha2"
 )
 
 const (

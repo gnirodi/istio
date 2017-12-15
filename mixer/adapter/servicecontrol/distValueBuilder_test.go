@@ -15,11 +15,12 @@
 package servicecontrol
 
 import (
-	"google.golang.org/api/googleapi"
-	sc "google.golang.org/api/servicecontrol/v1"
 	"math"
 	"reflect"
 	"testing"
+
+	"google.golang.org/api/googleapi"
+	sc "google.golang.org/api/servicecontrol/v1"
 )
 
 var option = distValueBuilderOption{

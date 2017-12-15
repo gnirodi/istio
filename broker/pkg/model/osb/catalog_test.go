@@ -15,9 +15,10 @@
 package osb
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"reflect"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestAddService(t *testing.T) {

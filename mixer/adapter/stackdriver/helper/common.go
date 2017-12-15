@@ -16,7 +16,9 @@ package helper
 
 import (
 	"fmt"
+
 	gapiopts "google.golang.org/api/option"
+
 	"istio.io/istio/mixer/adapter/stackdriver/config"
 )
 

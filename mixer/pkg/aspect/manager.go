@@ -18,15 +18,17 @@
 package aspect
 
 import (
-	rpc "github.com/googleapis/googleapis/google/rpc"
 	"io"
+	"time"
+
+	rpc "github.com/googleapis/googleapis/google/rpc"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/config"
 	"istio.io/istio/mixer/pkg/config/descriptor"
 	cpb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
-	"time"
 )
 
 type (

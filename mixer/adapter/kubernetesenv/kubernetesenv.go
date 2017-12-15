@@ -23,19 +23,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"istio.io/istio/mixer/adapter/kubernetesenv/config"
-	ktmpl "istio.io/istio/mixer/adapter/kubernetesenv/template"
-	"istio.io/istio/mixer/pkg/adapter"
+	"net"
+	"os"
+	"strings"
+	"time"
+
 	"k8s.io/api/core/v1"
 	k8s "k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // needed for auth
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"net"
-	"os"
-	"strings"
-	"time"
+
+	"istio.io/istio/mixer/adapter/kubernetesenv/config"
+	ktmpl "istio.io/istio/mixer/adapter/kubernetesenv/template"
+	"istio.io/istio/mixer/pkg/adapter"
 )
 
 const (

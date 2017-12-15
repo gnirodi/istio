@@ -16,16 +16,18 @@ package expr
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	dpb "istio.io/api/mixer/v1/config/descriptor"
-	cfgpb "istio.io/istio/mixer/pkg/config/proto"
-	"istio.io/istio/mixer/pkg/pool"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+
+	dpb "istio.io/api/mixer/v1/config/descriptor"
+	cfgpb "istio.io/istio/mixer/pkg/config/proto"
+	"istio.io/istio/mixer/pkg/pool"
 )
 
 // This private variable is an extract from go/token

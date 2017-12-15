@@ -15,13 +15,14 @@
 package crd
 
 import (
+	"os"
+	"os/user"
+	"testing"
+
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform/kube"
 	"istio.io/istio/pilot/test/mock"
 	"istio.io/istio/pilot/test/util"
-	"os"
-	"os/user"
-	"testing"
 )
 
 func kubeconfig(t *testing.T) string {

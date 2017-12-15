@@ -15,14 +15,16 @@
 package cmd
 
 import (
-	rpc "github.com/googleapis/googleapis/google/rpc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"istio.io/istio/mixer/pkg/attribute"
 	"reflect"
 	"strconv"
 	"testing"
 	"time"
+
+	rpc "github.com/googleapis/googleapis/google/rpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+
+	"istio.io/istio/mixer/pkg/attribute"
 )
 
 func TestAttributeHandling(t *testing.T) {

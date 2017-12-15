@@ -15,8 +15,9 @@
 package test
 
 import (
-	"istio.io/istio/mixer/pkg/attribute"
 	"time"
+
+	"istio.io/istio/mixer/pkg/attribute"
 )
 
 // Bag is a test version of attribute.Bag

@@ -15,8 +15,9 @@
 package mock
 
 import (
-	meshconfig "istio.io/api/mesh/v1alpha1"
 	"testing"
+
+	meshconfig "istio.io/api/mesh/v1alpha1"
 )
 
 func TestMockServices(t *testing.T) {

@@ -16,10 +16,11 @@ package mock
 
 import (
 	"fmt"
+	"net"
+
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/proxy"
-	"net"
 )
 
 // Mock values

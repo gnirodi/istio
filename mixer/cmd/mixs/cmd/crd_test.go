@@ -17,13 +17,14 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"regexp"
+	"strings"
+	"testing"
+
 	"istio.io/istio/mixer/adapter"
 	adptr "istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/template"
 	generatedTemplate "istio.io/istio/mixer/template"
-	"regexp"
-	"strings"
-	"testing"
 )
 
 var empty = ``

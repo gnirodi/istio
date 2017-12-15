@@ -29,11 +29,12 @@ package memquota
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"istio.io/istio/mixer/adapter/memquota/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/template/quota"
-	"time"
 )
 
 type handler struct {

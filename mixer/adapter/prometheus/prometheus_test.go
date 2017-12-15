@@ -17,16 +17,18 @@ package prometheus
 import (
 	"context"
 	"errors"
-	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
-	"istio.io/istio/mixer/adapter/prometheus/config"
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/pkg/adapter/test"
-	"istio.io/istio/mixer/template/metric"
 	"net/http"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
+
+	"istio.io/istio/mixer/adapter/prometheus/config"
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/pkg/adapter/test"
+	"istio.io/istio/mixer/template/metric"
 )
 
 type testServer struct {

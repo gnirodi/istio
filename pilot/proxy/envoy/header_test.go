@@ -15,10 +15,11 @@
 package envoy
 
 import (
-	routing "istio.io/api/routing/v1alpha1"
-	"istio.io/istio/pilot/model"
 	"reflect"
 	"testing"
+
+	routing "istio.io/api/routing/v1alpha1"
+	"istio.io/istio/pilot/model"
 )
 
 func TestHTTPMatch(t *testing.T) {

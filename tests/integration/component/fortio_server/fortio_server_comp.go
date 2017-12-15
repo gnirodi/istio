@@ -17,9 +17,10 @@ package fortioServer
 import (
 	"flag"
 	"fmt"
-	"istio.io/istio/tests/integration/framework"
 	"log"
 	"time"
+
+	"istio.io/istio/tests/integration/framework"
 )
 
 var (

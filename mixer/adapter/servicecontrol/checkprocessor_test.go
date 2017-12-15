@@ -17,19 +17,21 @@ package servicecontrol
 import (
 	"context"
 	"fmt"
+	"math"
+	"reflect"
+	"testing"
+	"time"
+
 	pbtypes "github.com/gogo/protobuf/types"
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	"google.golang.org/api/googleapi"
 	sc "google.golang.org/api/servicecontrol/v1"
+
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	at "istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/template/apikey"
-	"math"
-	"reflect"
-	"testing"
-	"time"
 )
 
 const meshServiceName = "test_service"

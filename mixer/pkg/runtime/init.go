@@ -16,8 +16,10 @@ package runtime
 
 import (
 	"context"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	cpb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/config/store"

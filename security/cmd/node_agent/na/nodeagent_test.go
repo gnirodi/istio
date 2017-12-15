@@ -17,19 +17,21 @@ package na
 import (
 	"bytes"
 	"fmt"
+	"net"
+	"testing"
+	"time"
+
 	"github.com/golang/glog"
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
 	"istio.io/istio/security/pkg/platform"
 	mockpc "istio.io/istio/security/pkg/platform/mock"
 	mockutil "istio.io/istio/security/pkg/util/mock"
 	"istio.io/istio/security/pkg/workload"
 	pb "istio.io/istio/security/proto"
-	"net"
-	"testing"
-	"time"
 )
 
 const (

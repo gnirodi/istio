@@ -30,14 +30,16 @@ package servicecontrol
 import (
 	"context"
 	"fmt"
+	"time"
+
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	"github.com/pborman/uuid"
 	sc "google.golang.org/api/servicecontrol/v1"
+
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/template/quota"
-	"time"
 )
 
 const (

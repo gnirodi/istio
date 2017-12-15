@@ -18,6 +18,7 @@ package version
 
 import (
 	"fmt"
+
 	_ "github.com/golang/glog" // import glog flags
 )
 

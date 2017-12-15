@@ -16,6 +16,7 @@ package store
 
 import (
 	"errors"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 )

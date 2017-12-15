@@ -15,8 +15,13 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"istio.io/istio/mixer/cmd/shared"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config"
@@ -24,9 +29,6 @@ import (
 	"istio.io/istio/mixer/pkg/config/store"
 	"istio.io/istio/mixer/pkg/runtime"
 	"istio.io/istio/mixer/pkg/template"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"time"
 )
 
 func validatorCmd(info map[string]template.Info, adapters []adapter.InfoFn, printf, fatalf shared.FormatFn) *cobra.Command {

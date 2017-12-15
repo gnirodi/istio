@@ -16,11 +16,12 @@ package util
 
 import (
 	"errors"
-	"github.com/pmezard/go-difflib/difflib"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 // Refresh controls whether to update the golden artifacts instead.

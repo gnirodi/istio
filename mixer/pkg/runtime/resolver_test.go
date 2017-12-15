@@ -17,10 +17,11 @@ package runtime
 import (
 	"errors"
 	"flag"
-	adptTmpl "istio.io/api/mixer/v1/template"
-	"istio.io/istio/mixer/pkg/attribute"
 	"strings"
 	"testing"
+
+	adptTmpl "istio.io/api/mixer/v1/template"
+	"istio.io/istio/mixer/pkg/attribute"
 )
 
 type testcase struct {

@@ -18,10 +18,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"istio.io/istio/security/pkg/pki"
 	"reflect"
 	"strings"
 	"time"
+
+	"istio.io/istio/security/pkg/pki"
 )
 
 // VerifyFields contains the certficate fields to verify in the test.

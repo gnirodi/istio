@@ -17,8 +17,9 @@
 package adapter
 
 import (
-	"github.com/gogo/protobuf/proto"
 	"io"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 type (

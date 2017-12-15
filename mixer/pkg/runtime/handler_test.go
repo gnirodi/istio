@@ -18,15 +18,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/golang/protobuf/ptypes/wrappers"
-	"istio.io/istio/mixer/pkg/adapter"
-	pb "istio.io/istio/mixer/pkg/config/proto"
-	tmpl "istio.io/istio/mixer/pkg/template"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/golang/protobuf/ptypes/wrappers"
+
+	"istio.io/istio/mixer/pkg/adapter"
+	pb "istio.io/istio/mixer/pkg/config/proto"
+	tmpl "istio.io/istio/mixer/pkg/template"
 )
 
 type fakeTmplRepo struct {

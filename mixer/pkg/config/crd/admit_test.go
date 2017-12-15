@@ -22,8 +22,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"istio.io/istio/mixer/pkg/config/store"
-	"istio.io/istio/pilot/platform/kube/admit/testcerts"
+	"net"
+	"net/http"
+	"os"
+	"os/user"
+	"testing"
+	"time"
+
 	"k8s.io/api/admission/v1alpha1"
 	admissionregistrationv1alpha1 "k8s.io/api/admissionregistration/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,12 +38,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/clientcmd"
-	"net"
-	"net/http"
-	"os"
-	"os/user"
-	"testing"
-	"time"
+
+	"istio.io/istio/mixer/pkg/config/store"
+	"istio.io/istio/pilot/platform/kube/admit/testcerts"
 )
 
 const (

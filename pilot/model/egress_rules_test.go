@@ -15,10 +15,11 @@
 package model_test
 
 import (
-	routing "istio.io/api/routing/v1alpha1"
-	"istio.io/istio/pilot/model"
 	"reflect"
 	"testing"
+
+	routing "istio.io/api/routing/v1alpha1"
+	"istio.io/istio/pilot/model"
 )
 
 func TestRejectConflictingEgressRules(t *testing.T) {

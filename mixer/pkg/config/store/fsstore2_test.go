@@ -17,13 +17,14 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/ghodss/yaml"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/ghodss/yaml"
 )
 
 const testingCheckDuration = time.Millisecond * 5

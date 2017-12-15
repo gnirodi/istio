@@ -19,13 +19,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"testing"
+	"time"
+
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+
 	"istio.io/istio/security/pkg/pki/ca"
 	pb "istio.io/istio/security/proto"
-	"testing"
-	"time"
 )
 
 const csr = `

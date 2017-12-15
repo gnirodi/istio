@@ -17,10 +17,11 @@ package eureka
 import (
 	"encoding/json"
 	"fmt"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/test/util"
 	"strings"
 	"testing"
+
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/test/util"
 )
 
 func TestConvertService(t *testing.T) {

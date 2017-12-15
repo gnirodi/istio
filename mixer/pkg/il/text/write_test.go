@@ -15,10 +15,11 @@
 package text
 
 import (
-	"istio.io/istio/mixer/pkg/il"
 	"math"
 	"strings"
 	"testing"
+
+	"istio.io/istio/mixer/pkg/il"
 )
 
 func checkWrites(t *testing.T, p *il.Program, expected string) {

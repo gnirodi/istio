@@ -15,22 +15,24 @@
 package metric
 
 import (
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
+
+	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/genproto/googleapis/api/distribution"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	"google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
+
 	descriptor "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/adapter/stackdriver/config"
 	"istio.io/istio/mixer/pkg/adapter/test"
 	metrict "istio.io/istio/mixer/template/metric"
-	"reflect"
-	"strings"
-	"testing"
-	"time"
 )
 
 type fakebuf struct {

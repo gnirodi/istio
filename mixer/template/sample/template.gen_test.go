@@ -18,11 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	rpc "github.com/googleapis/googleapis/google/rpc"
+
 	pb "istio.io/api/mixer/v1/config/descriptor"
 	adpTmpl "istio.io/api/mixer/v1/template"
 	"istio.io/istio/mixer/pkg/adapter"
@@ -34,11 +41,6 @@ import (
 	sample_check "istio.io/istio/mixer/template/sample/check"
 	sample_quota "istio.io/istio/mixer/template/sample/quota"
 	sample_report "istio.io/istio/mixer/template/sample/report"
-	"net"
-	"reflect"
-	"strings"
-	"testing"
-	"time"
 )
 
 // Does not implement any template interfaces.
