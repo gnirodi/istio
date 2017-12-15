@@ -1,0 +1,26 @@
+Istio:
+   deploy_base_config: true
+   initializer_enabled: true 
+   mixer_enabled: true 
+   pilot_enabled: true 
+   ca_hub: docker.io/gnirodi
+   ca_tag: gnirodi
+   ca_demo: false
+   ingress:
+#
+# By default istio ingress uses LoadBalancer type of service
+# to use NodePort, it needs to be enabled and desired port specified
+#
+      use_nodeport: false
+      nodeport_port: 32000 
+
+global:
+   auth_enabled: false 
+   namespace: istio-system
+   proxy_hub: docker.io/gnirodi
+   proxy_tag: 164dd584e63065ef8150bddf23d2c5c196319bad
+   proxy_debug: false
+   pilot_hub: docker.io/gnirodi
+   pilot_tag: gnirodi
+   mixer_hub: docker.io/gnirodi
+   mixer_tag: gnirodi

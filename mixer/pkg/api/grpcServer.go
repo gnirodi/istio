@@ -135,12 +135,16 @@ func (s *grpcServer) Check(legacyCtx legacyContext.Context, req *mixerpb.CheckRe
 	preprocResponseBag := attribute.GetMutableBag(nil)
 
 	glog.V(1).Info("Dispatching Preprocess Check")
-	out := s.aspectDispatcher.Preprocess(legacyCtx, compatReqBag, preprocResponseBag)
 
 	mutableBag := attribute.GetMutableBag(requestBag)
+	var out rpc.Status
+	if err := s.dispatcher.Preprocess(legacyCtx, compatReqBag, preprocResponseBag); err != nil {
+		out = status.WithError(err)
+	}
 	if err := mutableBag.PreserveMerge(preprocResponseBag); err != nil {
 		out = status.WithError(fmt.Errorf("could not merge preprocess attributes into request attributes: %v", err))
 	}
+
 	compatRespBag := &compatBag{mutableBag}
 
 	if !status.IsOK(out) {
@@ -276,8 +280,8 @@ func (s *grpcServer) Report(legacyCtx legacyContext.Context, req *mixerpb.Report
 	protoBag := attribute.NewProtoBag(&req.Attributes[0], s.globalDict, s.globalWordList)
 	requestBag := attribute.GetMutableBag(protoBag)
 	compatReqBag := &compatBag{requestBag}
+	mutableBag := attribute.GetMutableBag(requestBag)
 	preprocResponseBag := attribute.GetMutableBag(nil)
-
 	var err error
 	for i := 0; i < len(req.Attributes); i++ {
 		span, newctx := opentracing.StartSpanFromContext(legacyCtx, fmt.Sprintf("Attributes %d", i))
@@ -296,11 +300,14 @@ func (s *grpcServer) Report(legacyCtx legacyContext.Context, req *mixerpb.Report
 		}
 
 		glog.V(1).Info("Dispatching Preprocess")
-		out := s.aspectDispatcher.Preprocess(newctx, compatReqBag, preprocResponseBag)
-		mutableBag := attribute.GetMutableBag(requestBag)
+		var out rpc.Status
+		if err = s.dispatcher.Preprocess(newctx, compatReqBag, preprocResponseBag); err != nil {
+			out = status.WithError(err)
+		}
 		if err := mutableBag.PreserveMerge(preprocResponseBag); err != nil {
 			out = status.WithError(fmt.Errorf("could not merge preprocess attributes into request attributes: %v", err))
 		}
+
 		compatRespBag := &compatBag{mutableBag}
 		if !status.IsOK(out) {
 			glog.Error("Preprocess returned with: ", status.String(out))
