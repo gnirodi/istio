@@ -16,8 +16,6 @@ package aggregate
 
 import (
 	"math"
-
-	"istio.io/istio/pilot/model"
 )
 
 // Key used to track resources like service or service instance objects maintained by a registry
@@ -40,45 +38,9 @@ type resourceLabel struct {
 
 type resourceLabels []resourceLabel
 
-func resourceLabelsFromModelLabels(lc model.Labels) resourceLabels {
-	rl := make(resourceLabels, len(lc))
-	i := 0
-	for k, v := range lc {
-		rl[i] = resourceLabel{k, &v}
-		i++
-	}
-	return rl
-}
-
-func resourceLabelsForNameValue(name, value string) resourceLabels {
-	rl := make(resourceLabels, 1)
-	rl[0] = resourceLabel{name, &value}
-	return rl
-}
-
 func resourceLabelsForName(name string) resourceLabels {
 	rl := make(resourceLabels, 1)
 	rl[0] = resourceLabel{name, nil}
-	return rl
-}
-
-func resourceLabelsForValues(name string, values []string) resourceLabels {
-	rl := make(resourceLabels, len(values))
-	i := 0
-	for _, v := range values {
-		rl[i] = resourceLabel{name, &v}
-		i++
-	}
-	return rl
-}
-
-func resourceLabelsForValueSet(name string, values map[string]bool) resourceLabels {
-	rl := make(resourceLabels, len(values))
-	i := 0
-	for v := range values {
-		rl[i] = resourceLabel{name, &v}
-		i++
-	}
 	return rl
 }
 
@@ -184,7 +146,7 @@ func (nameValueKeysMap *nameValueKeysMap) getResourceKeysMatching(labels resourc
 	finalKeySet := matchingSets[0].keySet
 	if countLabels > 1 {
 		finalKeySet = make(resourceKeySet)
-		finalKeySet.appendFrom(&matchingSets[setIdx].keySet)
+		finalKeySet.appendFrom(&matchingSets[0].keySet)
 		for k := range finalKeySet {
 			for setIdx := 1; setIdx < countLabels; setIdx++ {
 				_, found := matchingSets[setIdx].keySet[k]
