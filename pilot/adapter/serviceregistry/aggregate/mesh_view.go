@@ -27,23 +27,22 @@ import (
 	"istio.io/istio/pilot/platform"
 )
 
-
 const (
-    // See resourceLabelsFromModelLabels() for more on why we need
-    // internal / external representations
-	labelXdsPrefix         = "config.istio.io/xds"
-	labelServicePrefix     = labelXdsPrefix + "Service."
+	// See resourceLabelsFromModelLabels() for more on why we need
+	// internal / external representations
+	labelXdsPrefix     = "config.istio.io/xds"
+	labelServicePrefix = labelXdsPrefix + "Service."
 	// xDS external interface for host / service name
-	labelServiceName       = labelServicePrefix + "name"
+	labelServiceName = labelServicePrefix + "name"
 	// xDS external interface for dns name
 	labelServiceExternalName = labelServicePrefix + "externalName"
 	// xDS external interface for service VIP
-	labelServiceVIP        = labelServicePrefix + "vip"
-	labelInstancePrefix    = labelXdsPrefix + "ServiceInstance."
-	// xDS external interface for the instance IP. 
+	labelServiceVIP     = labelServicePrefix + "vip"
+	labelInstancePrefix = labelXdsPrefix + "ServiceInstance."
+	// xDS external interface for the instance IP.
 	// Exernal format is a valid ipv4/v6 string format, ex: 10.1.1.3
 	// Internally stored format is a hex representation
-	labelInstanceIP        = labelInstancePrefix + "ip"
+	labelInstanceIP = labelInstancePrefix + "ip"
 	// xDS external interface for instance Port
 	// Exernal format is a valid 16 bit unsigned integer
 	// Internally stored format is a hex representation
@@ -129,18 +128,18 @@ func getPortHex(port int) string {
 // values that are otherwise identical, ex: 08880 and 8080
 // or 10.1.1.3 and ::ffff:10.1.1.3
 func resourceLabelFromNameValue(label string, value *string) resourceLabel {
-    switch label {
-    case labelServiceVIP:
-        fallthrough
-    case labelInstanceIP:
-        ipHex := getIPHex(*value)
-        return resourceLabel{label, &ipHex}
-    case labelInstancePort:
-        var port int 
-        fmt.Sscanf(*value, "%d", &port)
-        portHex := getPortHex(port)
-        return resourceLabel{label, &portHex}
-    }
+	switch label {
+	case labelServiceVIP:
+		fallthrough
+	case labelInstanceIP:
+		ipHex := getIPHex(*value)
+		return resourceLabel{label, &ipHex}
+	case labelInstancePort:
+		var port int
+		fmt.Sscanf(*value, "%d", &port)
+		portHex := getPortHex(port)
+		return resourceLabel{label, &portHex}
+	}
 	return resourceLabel{label, value}
 }
 
@@ -148,7 +147,7 @@ func resourceLabelsFromModelLabels(lc model.Labels) resourceLabels {
 	rl := make(resourceLabels, len(lc))
 	i := 0
 	for k, v := range lc {
-	    rl[i] = resourceLabelFromNameValue(k, &v)
+		rl[i] = resourceLabelFromNameValue(k, &v)
 		i++
 	}
 	return rl
@@ -157,7 +156,7 @@ func resourceLabelsFromModelLabels(lc model.Labels) resourceLabels {
 func resourceLabelsFromNameValues(label string, values []string) resourceLabels {
 	rl := make(resourceLabels, len(values))
 	for idx, v := range values {
-	    rl[idx] = resourceLabelFromNameValue(label, &v)
+		rl[idx] = resourceLabelFromNameValue(label, &v)
 	}
 	return rl
 }
@@ -199,9 +198,9 @@ func (v *MeshResourceView) GetService(hostname string) (*model.Service, error) {
 // ManagementPorts retrieves set of health check ports by instance IP
 // Return on the first hit.
 func (v *MeshResourceView) ManagementPorts(addr string) model.PortList {
-    // TODO(gnirodi): management ports should either be an interface
-    // on Service or ServiceInstance or both. The registry should
-    // not have to care about the concept of management ports
+	// TODO(gnirodi): management ports should either be an interface
+	// on Service or ServiceInstance or both. The registry should
+	// not have to care about the concept of management ports
 	for _, r := range v.registries {
 		if portList := r.ManagementPorts(addr); portList != nil {
 			return portList
@@ -235,13 +234,12 @@ func resourceLabelsForIpSet(name string, values map[string]bool) resourceLabels 
 	rl := make(resourceLabels, len(values))
 	i := 0
 	for v := range values {
-	    ipHex := getIPHex(v)
+		ipHex := getIPHex(v)
 		rl[i] = resourceLabel{name, &ipHex}
 		i++
 	}
 	return rl
 }
-	
 
 // HostInstances lists service instances for a given set of IPv4 addresses.
 func (v *MeshResourceView) HostInstances(addrs map[string]bool) ([]*model.ServiceInstance, error) {
