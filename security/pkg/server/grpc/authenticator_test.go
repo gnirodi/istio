@@ -18,13 +18,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"reflect"
+	"testing"
+
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
+
 	"istio.io/istio/security/pkg/pki"
-	"reflect"
-	"testing"
 )
 
 // TODO: Test the error messages.

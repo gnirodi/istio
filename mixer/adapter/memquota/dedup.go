@@ -15,10 +15,11 @@
 package memquota
 
 import (
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/template/quota"
 	"sync"
 	"time"
+
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/template/quota"
 )
 
 type (

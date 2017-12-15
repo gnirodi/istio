@@ -18,15 +18,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/spf13/cobra"
-	mixerpb "istio.io/api/mixer/v1"
-	"istio.io/istio/mixer/cmd/shared"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/spf13/cobra"
+
+	mixerpb "istio.io/api/mixer/v1"
+	"istio.io/istio/mixer/cmd/shared"
 )
 
 func checkCmd(rootArgs *rootArgs, printf, fatalf shared.FormatFn) *cobra.Command {

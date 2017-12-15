@@ -15,10 +15,11 @@
 package perf
 
 import (
-	"istio.io/istio/pkg/log"
 	"net"
 	"net/http"
 	"net/rpc"
+
+	"istio.io/istio/pkg/log"
 )
 
 // Controller is the top-level perf benchmark controller. It drives the test by managing the client(s) that generate

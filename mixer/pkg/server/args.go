@@ -17,6 +17,7 @@ package server
 import (
 	"bytes"
 	"fmt"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/il/evaluator"
 	mixerRuntime "istio.io/istio/mixer/pkg/runtime"

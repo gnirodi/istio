@@ -17,13 +17,15 @@ package crd
 import (
 	"bytes"
 	"fmt"
-	"github.com/golang/glog"
 	"io"
-	"istio.io/istio/pilot/model"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"reflect"
 	"strings"
+
+	"github.com/golang/glog"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubeyaml "k8s.io/apimachinery/pkg/util/yaml"
+
+	"istio.io/istio/pilot/model"
 )
 
 // ConvertObject converts an IstioObject k8s-style object to the

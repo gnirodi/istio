@@ -17,10 +17,11 @@ package aggregate
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
+
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/platform"
 	"istio.io/istio/pilot/test/mock"
-	"testing"
 )
 
 var platform1 platform.ServiceRegistry

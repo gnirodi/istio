@@ -19,8 +19,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/gogo/protobuf/proto"
 	google_rpc "github.com/googleapis/googleapis/google/rpc"
+
 	adptTmpl "istio.io/api/mixer/v1/template"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/aspect"
@@ -30,9 +35,6 @@ import (
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/pkg/template"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 func TestDispatcher_safeDispatch(t *testing.T) {

@@ -16,7 +16,9 @@ package na
 
 import (
 	"fmt"
+
 	"github.com/golang/glog"
+
 	"istio.io/istio/security/pkg/platform"
 	"istio.io/istio/security/pkg/workload"
 )

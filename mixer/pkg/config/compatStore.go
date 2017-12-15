@@ -16,8 +16,9 @@ package config
 
 import (
 	"io/ioutil"
-	"istio.io/istio/mixer/pkg/config/store"
 	"os"
+
+	"istio.io/istio/mixer/pkg/config/store"
 )
 
 // compatStore.go implements compatibility between file based and api based

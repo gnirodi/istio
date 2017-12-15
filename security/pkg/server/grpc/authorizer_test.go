@@ -15,8 +15,9 @@
 package grpc
 
 import (
-	"istio.io/istio/security/pkg/registry"
 	"testing"
+
+	"istio.io/istio/security/pkg/registry"
 )
 
 func TestSameIDAuthroizer(t *testing.T) {

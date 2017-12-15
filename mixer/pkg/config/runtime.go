@@ -16,12 +16,14 @@ package config
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
+
 	"istio.io/istio/mixer/pkg/attribute"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
-	"strings"
 )
 
 type (

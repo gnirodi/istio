@@ -27,13 +27,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/gorilla/websocket"
-	flag "github.com/spf13/pflag"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/metadata"
-	pb "istio.io/istio/pilot/test/grpcecho"
 	"log"
 	"math/rand"
 	"net"
@@ -43,6 +36,15 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/gorilla/websocket"
+	flag "github.com/spf13/pflag"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
+
+	pb "istio.io/istio/pilot/test/grpcecho"
 )
 
 var (

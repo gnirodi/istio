@@ -19,8 +19,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
 	"io/ioutil"
+
+	"github.com/golang/glog"
+
 	"istio.io/istio/security/pkg/pki/ca"
 )
 

@@ -18,10 +18,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/golang/glog"
-	multierror "github.com/hashicorp/go-multierror"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	multierror "github.com/hashicorp/go-multierror"
 )
 
 type egressRules struct {

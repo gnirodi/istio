@@ -16,10 +16,16 @@ package server
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net"
+	"os"
+	"path"
+	"time"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
-	"io/ioutil"
+
 	mixerpb "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapterManager"
@@ -33,10 +39,6 @@ import (
 	mixerRuntime "istio.io/istio/mixer/pkg/runtime"
 	"istio.io/istio/mixer/pkg/template"
 	"istio.io/istio/pkg/log"
-	"net"
-	"os"
-	"path"
-	"time"
 )
 
 // Server is an in-memory Mixer service.

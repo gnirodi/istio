@@ -16,11 +16,13 @@ package servicecontrol
 
 import (
 	"encoding/json"
-	rpc "github.com/googleapis/googleapis/google/rpc"
-	sc "google.golang.org/api/servicecontrol/v1"
-	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	"strconv"
 	"time"
+
+	rpc "github.com/googleapis/googleapis/google/rpc"
+	sc "google.golang.org/api/servicecontrol/v1"
+
+	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 )
 
 const (

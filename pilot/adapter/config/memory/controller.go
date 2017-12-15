@@ -16,6 +16,7 @@ package memory
 
 import (
 	"errors"
+
 	"istio.io/istio/pilot/model"
 )
 

@@ -17,16 +17,18 @@ package statsd
 import (
 	"context"
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/cactus/go-statsd-client/statsd/statsdtest"
 	"github.com/golang/protobuf/proto"
+
 	descriptor "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/adapter/statsd/config"
 	"istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/template/metric"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestValidateConfig(t *testing.T) {

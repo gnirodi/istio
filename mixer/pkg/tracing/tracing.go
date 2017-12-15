@@ -19,14 +19,15 @@ package tracing
 
 import (
 	"fmt"
+	"io"
+	"time"
+
 	"github.com/golang/glog"
 	opentracing "github.com/opentracing/opentracing-go"
 	jaeger "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-client-go/transport"
 	"github.com/uber/jaeger-client-go/transport/zipkin"
-	"io"
-	"time"
 )
 
 var (

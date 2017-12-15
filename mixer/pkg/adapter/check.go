@@ -16,9 +16,11 @@ package adapter
 
 import (
 	"fmt"
-	rpc "github.com/googleapis/googleapis/google/rpc"
-	"istio.io/istio/mixer/pkg/status"
 	"time"
+
+	rpc "github.com/googleapis/googleapis/google/rpc"
+
+	"istio.io/istio/mixer/pkg/status"
 )
 
 // TODO revisit the comment on this adapter struct.

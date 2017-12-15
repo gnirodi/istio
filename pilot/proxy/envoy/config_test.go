@@ -16,16 +16,18 @@ package envoy
 
 import (
 	"crypto/sha1"
-	"github.com/golang/protobuf/ptypes"
 	"io/ioutil"
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/proxy"
-	"istio.io/istio/pilot/test/util"
 	"reflect"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
+
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/proxy"
+	"istio.io/istio/pilot/test/util"
 )
 
 func TestRoutesByPath(t *testing.T) {

@@ -17,12 +17,14 @@ package metric
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"testing"
+
 	gax "github.com/googleapis/gax-go"
 	xcontext "golang.org/x/net/context"
 	monitoring "google.golang.org/genproto/googleapis/monitoring/v3"
+
 	"istio.io/istio/mixer/pkg/adapter/test"
-	"strings"
-	"testing"
 )
 
 func TestBuffered_Record(t *testing.T) {

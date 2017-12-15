@@ -15,15 +15,8 @@
 package log
 
 import (
-	"cloud.google.com/go/logging"
 	"errors"
 	"fmt"
-	"golang.org/x/net/context"
-	"google.golang.org/api/option"
-	"google.golang.org/genproto/googleapis/api/monitoredres"
-	"istio.io/istio/mixer/adapter/stackdriver/config"
-	"istio.io/istio/mixer/pkg/adapter/test"
-	"istio.io/istio/mixer/template/logentry"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -31,6 +24,15 @@ import (
 	"testing"
 	"text/template"
 	"time"
+
+	"cloud.google.com/go/logging"
+	"golang.org/x/net/context"
+	"google.golang.org/api/option"
+	"google.golang.org/genproto/googleapis/api/monitoredres"
+
+	"istio.io/istio/mixer/adapter/stackdriver/config"
+	"istio.io/istio/mixer/pkg/adapter/test"
+	"istio.io/istio/mixer/template/logentry"
 )
 
 func TestBuild(t *testing.T) {

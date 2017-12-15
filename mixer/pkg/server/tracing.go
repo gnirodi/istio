@@ -16,10 +16,12 @@ package server
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	ot "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
-	"io"
+
 	"istio.io/istio/mixer/pkg/tracing"
 )
 

@@ -15,12 +15,13 @@
 package log
 
 import (
-	"github.com/spf13/cobra"
-	"go.uber.org/zap/zapcore"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"go.uber.org/zap/zapcore"
 )
 
 func TestOpts(t *testing.T) {

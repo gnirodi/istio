@@ -17,12 +17,7 @@ package list
 import (
 	"context"
 	"errors"
-	"github.com/ghodss/yaml"
-	rpc "github.com/googleapis/googleapis/google/rpc"
 	"io"
-	"istio.io/istio/mixer/adapter/list/config"
-	"istio.io/istio/mixer/pkg/adapter/test"
-	"istio.io/istio/mixer/template/listentry"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -30,6 +25,13 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/ghodss/yaml"
+	rpc "github.com/googleapis/googleapis/google/rpc"
+
+	"istio.io/istio/mixer/adapter/list/config"
+	"istio.io/istio/mixer/pkg/adapter/test"
+	"istio.io/istio/mixer/template/listentry"
 )
 
 func TestBasic(t *testing.T) {

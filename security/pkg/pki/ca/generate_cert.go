@@ -26,13 +26,15 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"github.com/golang/glog"
 	"io/ioutil"
-	"istio.io/istio/security/pkg/pki"
 	"math/big"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+
+	"istio.io/istio/security/pkg/pki"
 )
 
 // CertOptions contains options for generating a new certificate.

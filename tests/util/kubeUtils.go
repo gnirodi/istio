@@ -19,13 +19,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 const (

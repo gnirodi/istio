@@ -15,11 +15,13 @@
 package kube
 
 import (
-	"istio.io/istio/pilot/model"
-	"k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes/fake"
 	"reflect"
 	"testing"
+
+	"k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
+	"istio.io/istio/pilot/model"
 )
 
 func TestPodCache(t *testing.T) {

@@ -16,6 +16,7 @@ package grpc
 
 import (
 	"fmt"
+
 	"istio.io/istio/security/pkg/registry"
 )
 

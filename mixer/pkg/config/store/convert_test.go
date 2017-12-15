@@ -15,10 +15,12 @@
 package store
 
 import (
-	"github.com/gogo/protobuf/proto"
-	cfg "istio.io/istio/mixer/pkg/config/proto"
 	"reflect"
 	"testing"
+
+	"github.com/gogo/protobuf/proto"
+
+	cfg "istio.io/istio/mixer/pkg/config/proto"
 )
 
 func TestConvert(t *testing.T) {

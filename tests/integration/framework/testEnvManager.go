@@ -17,9 +17,10 @@ package framework
 import (
 	"flag"
 	"fmt"
-	u "istio.io/istio/tests/util"
 	"log"
 	"time"
+
+	u "istio.io/istio/tests/util"
 )
 
 var (

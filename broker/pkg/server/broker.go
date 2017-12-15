@@ -17,12 +17,14 @@ package server
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+
 	"istio.io/istio/broker/pkg/controller"
 	"istio.io/istio/broker/pkg/model/config"
 	"istio.io/istio/broker/pkg/platform/kube/crd"
-	"net/http"
 )
 
 // Server data

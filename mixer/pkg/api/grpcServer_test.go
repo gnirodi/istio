@@ -19,8 +19,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
+	"strings"
+	"testing"
+
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	"google.golang.org/grpc"
+
 	mixerpb "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapterManager"
@@ -28,9 +33,6 @@ import (
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/status"
-	"net"
-	"strings"
-	"testing"
 )
 
 type preprocCallback func(ctx context.Context, requestBag attribute.Bag, responseBag *attribute.MutableBag) error

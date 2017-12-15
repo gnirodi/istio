@@ -16,12 +16,16 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+
 	restful "github.com/emicklei/go-restful"
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 	rpc "github.com/googleapis/googleapis/google/rpc"
-	"io"
-	"io/ioutil"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config/descriptor"
 	pb "istio.io/istio/mixer/pkg/config/proto"
@@ -29,8 +33,6 @@ import (
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/status"
 	"istio.io/istio/mixer/pkg/template"
-	"net/http"
-	"strconv"
 )
 
 type validateFunc func(cfg map[string]string) (rt *Validated, desc descriptor.Finder, ce *adapter.ConfigErrors)

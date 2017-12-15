@@ -17,6 +17,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	env "istio.io/istio/tests/integration/example/environment/appOnlyEnv"
 	"istio.io/istio/tests/integration/framework"
 )

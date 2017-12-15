@@ -17,16 +17,18 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
-	multierror "github.com/hashicorp/go-multierror"
-	"github.com/spf13/cobra"
 	"io/ioutil"
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/proxy"
-	"istio.io/istio/pilot/tools/version"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/golang/glog"
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/spf13/cobra"
+
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/proxy"
+	"istio.io/istio/pilot/tools/version"
 )
 
 // ReadMeshConfig gets mesh configuration from a config file

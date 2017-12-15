@@ -10,9 +10,10 @@ package crd
 // as declared in the Pilot config model.
 
 import (
-	"istio.io/istio/pilot/model"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"istio.io/istio/pilot/model"
 )
 
 var knownTypes = map[string]struct {

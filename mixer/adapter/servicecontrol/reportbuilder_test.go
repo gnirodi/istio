@@ -15,11 +15,13 @@
 package servicecontrol
 
 import (
-	sc "google.golang.org/api/servicecontrol/v1"
-	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	"reflect"
 	"testing"
 	"time"
+
+	sc "google.golang.org/api/servicecontrol/v1"
+
+	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 )
 
 func getTestReportBuilder() *reportBuilder {

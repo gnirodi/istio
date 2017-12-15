@@ -17,10 +17,11 @@ package proxy
 import (
 	"context"
 	"fmt"
-	"github.com/golang/glog"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 // ResolveAddr resolves an authority address to an IP address

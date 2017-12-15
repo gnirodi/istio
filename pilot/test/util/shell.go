@@ -16,10 +16,11 @@ package util
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 // Run command and stream output

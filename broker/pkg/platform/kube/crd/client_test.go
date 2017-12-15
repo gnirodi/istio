@@ -15,15 +15,17 @@
 package crd
 
 import (
-	"istio.io/istio/broker/pkg/model/config"
-	"istio.io/istio/broker/pkg/testing/mock"
-	"istio.io/istio/broker/pkg/testing/util"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"os/user"
 	"testing"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
+	"istio.io/istio/broker/pkg/model/config"
+	"istio.io/istio/broker/pkg/testing/mock"
+	"istio.io/istio/broker/pkg/testing/util"
 )
 
 func kubeconfig(t *testing.T) string {

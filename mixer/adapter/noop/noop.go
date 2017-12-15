@@ -19,8 +19,11 @@ package noop // import "istio.io/istio/mixer/adapter/noop"
 
 import (
 	"context"
+	"time"
+
 	"github.com/gogo/protobuf/types"
 	rpc "github.com/googleapis/googleapis/google/rpc"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/template/checknothing"
 	"istio.io/istio/mixer/template/listentry"
@@ -28,7 +31,6 @@ import (
 	"istio.io/istio/mixer/template/metric"
 	"istio.io/istio/mixer/template/quota"
 	"istio.io/istio/mixer/template/reportnothing"
-	"time"
 )
 
 type handler struct{}

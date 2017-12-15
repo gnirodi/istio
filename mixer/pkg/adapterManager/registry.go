@@ -16,7 +16,9 @@ package adapterManager
 
 import (
 	"fmt"
+
 	"github.com/golang/glog"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config"
 )

@@ -17,18 +17,20 @@ package stdio
 import (
 	"context"
 	"errors"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	descriptor "istio.io/api/mixer/v1/config/descriptor"
-	"istio.io/istio/mixer/adapter/stdio/config"
-	"istio.io/istio/mixer/pkg/adapter/test"
-	"istio.io/istio/mixer/template/logentry"
-	"istio.io/istio/mixer/template/metric"
 	"net"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	descriptor "istio.io/api/mixer/v1/config/descriptor"
+	"istio.io/istio/mixer/adapter/stdio/config"
+	"istio.io/istio/mixer/pkg/adapter/test"
+	"istio.io/istio/mixer/template/logentry"
+	"istio.io/istio/mixer/template/metric"
 )
 
 func TestBasic(t *testing.T) {

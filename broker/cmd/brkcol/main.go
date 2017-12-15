@@ -20,9 +20,10 @@
 package main
 
 import (
+	"os"
+
 	"istio.io/istio/broker/cmd/brkcol/cmd"
 	"istio.io/istio/broker/cmd/shared"
-	"os"
 )
 
 func main() {

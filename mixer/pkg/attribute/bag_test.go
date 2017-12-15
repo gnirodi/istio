@@ -17,12 +17,13 @@ package attribute
 import (
 	"flag"
 	"fmt"
-	mixerpb "istio.io/api/mixer/v1"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	mixerpb "istio.io/api/mixer/v1"
 )
 
 var (

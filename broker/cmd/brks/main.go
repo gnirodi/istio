@@ -14,8 +14,9 @@
 package main
 
 import (
-	"istio.io/istio/broker/cmd/brks/cmd"
 	"os"
+
+	"istio.io/istio/broker/cmd/brks/cmd"
 )
 
 func main() {

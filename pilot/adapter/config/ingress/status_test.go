@@ -15,18 +15,20 @@
 package ingress
 
 import (
+	"os"
+	"testing"
+	"time"
+
 	"github.com/golang/glog"
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/platform/kube"
-	"istio.io/istio/pilot/proxy"
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/ingress/core/pkg/ingress/annotations/class"
-	"os"
-	"testing"
-	"time"
+
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/platform/kube"
+	"istio.io/istio/pilot/proxy"
 )
 
 func makeAnnotatedIngress(annotation string) *extensions.Ingress {

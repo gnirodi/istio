@@ -15,22 +15,24 @@
 package log
 
 import (
-	"cloud.google.com/go/logging"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"text/template"
+	"time"
+
+	"cloud.google.com/go/logging"
 	xctx "golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/genproto/googleapis/api/monitoredres"
-	"io"
+
 	"istio.io/istio/mixer/adapter/stackdriver/config"
 	"istio.io/istio/mixer/adapter/stackdriver/helper"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/template/logentry"
-	"net/http"
-	"net/url"
-	"text/template"
-	"time"
 )
 
 type (

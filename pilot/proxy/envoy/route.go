@@ -19,13 +19,15 @@ package envoy
 
 import (
 	"fmt"
-	"github.com/golang/protobuf/ptypes/duration"
-	routing "istio.io/api/routing/v1alpha1"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/proxy"
 	"path"
 	"sort"
 	"strings"
+
+	"github.com/golang/protobuf/ptypes/duration"
+
+	routing "istio.io/api/routing/v1alpha1"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/proxy"
 )
 
 const (

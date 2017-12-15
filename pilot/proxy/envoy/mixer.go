@@ -17,16 +17,18 @@
 package envoy
 
 import (
+	"net"
+	"net/url"
+	"sort"
+	"strings"
+
 	"github.com/golang/glog"
+
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	mpb "istio.io/api/mixer/v1"
 	mccpb "istio.io/api/mixer/v1/config/client"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/proxy"
-	"net"
-	"net/url"
-	"sort"
-	"strings"
 )
 
 const (

@@ -18,7 +18,9 @@ package spyAdapter
 
 import (
 	"context"
+
 	"github.com/gogo/protobuf/types"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	apaTmpl "istio.io/istio/mixer/test/spyAdapter/template/apa"
 	reportTmpl "istio.io/istio/mixer/test/spyAdapter/template/report"

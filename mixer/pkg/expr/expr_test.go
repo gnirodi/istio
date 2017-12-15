@@ -16,11 +16,12 @@ package expr
 
 import (
 	"fmt"
-	dpb "istio.io/api/mixer/v1/config/descriptor"
-	cfgpb "istio.io/istio/mixer/pkg/config/proto"
 	"reflect"
 	"strings"
 	"testing"
+
+	dpb "istio.io/api/mixer/v1/config/descriptor"
+	cfgpb "istio.io/istio/mixer/pkg/config/proto"
 )
 
 func TestGoodParse(t *testing.T) {

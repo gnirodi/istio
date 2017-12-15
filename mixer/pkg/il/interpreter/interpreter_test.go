@@ -18,12 +18,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"istio.io/istio/mixer/pkg/il"
-	"istio.io/istio/mixer/pkg/il/testing"
-	"istio.io/istio/mixer/pkg/il/text"
 	"strings"
 	"testing"
 	"time"
+
+	"istio.io/istio/mixer/pkg/il"
+	"istio.io/istio/mixer/pkg/il/testing"
+	"istio.io/istio/mixer/pkg/il/text"
 )
 
 // test is a common struct used by many tests in this context.

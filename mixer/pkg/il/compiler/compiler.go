@@ -18,11 +18,13 @@ package compiler
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
+
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/il"
-	"time"
 )
 
 // Compiler is a stateful compiler that can be used to gradually build an il.Program out of multiple independent

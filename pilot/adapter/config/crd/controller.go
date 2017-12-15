@@ -17,16 +17,18 @@ package crd
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"time"
+
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/platform/kube"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
-	"reflect"
-	"time"
+
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/platform/kube"
 )
 
 // controller is a collection of synchronized resource watchers.

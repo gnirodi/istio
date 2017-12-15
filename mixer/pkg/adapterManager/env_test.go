@@ -15,10 +15,11 @@
 package adapterManager
 
 import (
-	"istio.io/istio/mixer/pkg/pool"
 	"sync"
 	"testing"
 	"time"
+
+	"istio.io/istio/mixer/pkg/pool"
 )
 
 func TestEnv(t *testing.T) {

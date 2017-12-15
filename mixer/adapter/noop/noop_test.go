@@ -19,7 +19,12 @@ package noop
 
 import (
 	"context"
+	"reflect"
+	"testing"
+	"time"
+
 	rpc "github.com/googleapis/googleapis/google/rpc"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/template/checknothing"
@@ -28,9 +33,6 @@ import (
 	"istio.io/istio/mixer/template/metric"
 	"istio.io/istio/mixer/template/quota"
 	"istio.io/istio/mixer/template/reportnothing"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func TestBasic(t *testing.T) {

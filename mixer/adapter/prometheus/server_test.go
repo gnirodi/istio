@@ -16,9 +16,10 @@ package prometheus
 
 import (
 	"fmt"
-	"istio.io/istio/mixer/pkg/adapter/test"
 	"net/http"
 	"testing"
+
+	"istio.io/istio/mixer/pkg/adapter/test"
 )
 
 func doesNothing(http.ResponseWriter, *http.Request) {}

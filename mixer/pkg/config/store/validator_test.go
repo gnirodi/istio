@@ -16,10 +16,12 @@ package store
 
 import (
 	"errors"
-	"github.com/gogo/protobuf/proto"
-	cfg "istio.io/istio/mixer/pkg/config/proto"
 	"strings"
 	"testing"
+
+	"github.com/gogo/protobuf/proto"
+
+	cfg "istio.io/istio/mixer/pkg/config/proto"
 )
 
 type fakeValidator struct {

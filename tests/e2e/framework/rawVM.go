@@ -18,10 +18,11 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	u "istio.io/istio/tests/util"
 	"path/filepath"
 	"strings"
 	"time"
+
+	u "istio.io/istio/tests/util"
 )
 
 // RawVM interfaces different cloud venders to support e2e testing with VM

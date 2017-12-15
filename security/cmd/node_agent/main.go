@@ -15,11 +15,13 @@
 package main
 
 import (
+	"os"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+
 	"istio.io/istio/security/cmd/node_agent/na"
 	"istio.io/istio/security/pkg/cmd"
-	"os"
 )
 
 var (

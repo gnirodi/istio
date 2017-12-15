@@ -15,8 +15,9 @@
 package util
 
 import (
-	"github.com/golang/glog"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 const (

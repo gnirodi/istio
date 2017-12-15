@@ -18,12 +18,13 @@ import (
 	"encoding/json"
 	"flag"
 	"io"
-	"istio.io/istio/mixer/example/servicegraph"
-	"istio.io/istio/mixer/example/servicegraph/dot"
-	"istio.io/istio/mixer/example/servicegraph/promgen"
 	"log"
 	"net/http"
 	"os"
+
+	"istio.io/istio/mixer/example/servicegraph"
+	"istio.io/istio/mixer/example/servicegraph/dot"
+	"istio.io/istio/mixer/example/servicegraph/promgen"
 )
 
 func writeJSON(w io.Writer, g *servicegraph.Dynamic) error {

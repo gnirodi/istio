@@ -18,7 +18,12 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
+	"reflect"
+	"sync"
+	"time"
+
 	"github.com/golang/glog"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/config/descriptor"
@@ -26,9 +31,6 @@ import (
 	"istio.io/istio/mixer/pkg/config/store"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/template"
-	"reflect"
-	"sync"
-	"time"
 )
 
 // Resolver resolves configuration to a list of combined configs.

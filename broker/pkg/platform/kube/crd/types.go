@@ -24,10 +24,11 @@ package crd
 // as declared in the Broker config model.
 
 import (
-	"istio.io/istio/broker/pkg/model/config"
-	"istio.io/istio/broker/pkg/testing/mock"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"istio.io/istio/broker/pkg/model/config"
+	"istio.io/istio/broker/pkg/testing/mock"
 )
 
 var knownTypes = map[string]struct {

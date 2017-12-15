@@ -17,12 +17,14 @@ package config
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/gogo/protobuf/types"
+
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/template"
 	"istio.io/istio/mixer/template/sample"
 	sample_report "istio.io/istio/mixer/template/sample/report"
-	"testing"
 )
 
 type TestBuilderInfoInventory struct {

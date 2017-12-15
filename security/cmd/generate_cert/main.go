@@ -21,10 +21,12 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
 	"io/ioutil"
-	"istio.io/istio/security/pkg/pki/ca"
 	"time"
+
+	"github.com/golang/glog"
+
+	"istio.io/istio/security/pkg/pki/ca"
 )
 
 // Layout for parsing time

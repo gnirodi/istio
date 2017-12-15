@@ -17,7 +17,9 @@ package cmd
 import (
 	"flag"
 	"fmt"
+
 	"github.com/spf13/cobra"
+
 	"istio.io/istio/mixer/cmd/shared"
 )
 

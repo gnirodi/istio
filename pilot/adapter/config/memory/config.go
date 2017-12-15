@@ -17,8 +17,9 @@ package memory
 
 import (
 	"errors"
-	"istio.io/istio/pilot/model"
 	"time"
+
+	"istio.io/istio/pilot/model"
 )
 
 var (

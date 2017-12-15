@@ -17,11 +17,12 @@ package inject
 import (
 	"bytes"
 	"fmt"
-	restful "github.com/emicklei/go-restful"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	restful "github.com/emicklei/go-restful"
+	"github.com/golang/glog"
 )
 
 const (

@@ -15,14 +15,16 @@
 package model_test
 
 import (
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/davecgh/go-spew/spew"
+
 	mpb "istio.io/api/mixer/v1"
 	mccpb "istio.io/api/mixer/v1/config/client"
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 func TestGogoProtoSchemaConversions(t *testing.T) {

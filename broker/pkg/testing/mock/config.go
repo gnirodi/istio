@@ -17,14 +17,16 @@ package mock
 import (
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/golang/protobuf/proto"
-	brokerconfig "istio.io/api/broker/v1/config"
-	"istio.io/istio/broker/pkg/model/config"
-	testproto "istio.io/istio/broker/pkg/testing/mock/proto"
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/golang/protobuf/proto"
+
+	brokerconfig "istio.io/api/broker/v1/config"
+	"istio.io/istio/broker/pkg/model/config"
+	testproto "istio.io/istio/broker/pkg/testing/mock/proto"
 )
 
 var (

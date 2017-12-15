@@ -17,11 +17,13 @@ package model
 import (
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/golang/protobuf/proto"
+
 	mccpb "istio.io/api/mixer/v1/config/client"
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model/test"
-	"sort"
 )
 
 // ConfigMeta is metadata attached to each configuration unit.
