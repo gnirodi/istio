@@ -16,7 +16,6 @@ package config
 
 import (
 	"fmt"
-
 	"istio.io/istio/mixer/pkg/pool"
 )
 

@@ -17,12 +17,11 @@ package platform
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"reflect"
+	"testing"
 )
 
 const (

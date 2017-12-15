@@ -17,18 +17,16 @@ package inject
 import (
 	"bytes"
 	"errors"
+	restful "github.com/emicklei/go-restful"
 	"io/ioutil"
+	"istio.io/istio/pilot/proxy"
+	"istio.io/istio/pilot/test/util"
+	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
-
-	restful "github.com/emicklei/go-restful"
-	v1 "k8s.io/api/core/v1"
-
-	"istio.io/istio/pilot/proxy"
-	"istio.io/istio/pilot/test/util"
 )
 
 var (

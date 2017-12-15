@@ -17,9 +17,8 @@ package text
 import (
 	"bytes"
 	"fmt"
-	"sort"
-
 	"istio.io/istio/mixer/pkg/il"
+	"sort"
 )
 
 // WriteText writes the program in the textual assembly form and returns it as string.

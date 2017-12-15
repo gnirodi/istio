@@ -18,11 +18,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
-	"sync"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
+	"net/url"
+	"sync"
 )
 
 // ErrNotFound is the error to be returned when the given key does not exist in the storage.

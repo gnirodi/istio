@@ -16,11 +16,10 @@ package evaluator
 
 import (
 	"fmt"
-	"strings"
-	"testing"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	cfgpb "istio.io/istio/mixer/pkg/config/proto"
+	"strings"
+	"testing"
 )
 
 func TestTypeCheck(t *testing.T) {

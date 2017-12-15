@@ -18,11 +18,9 @@ package shared
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
-
 	"istio.io/istio/mixer/pkg/version"
+	"os"
 )
 
 // FormatFn formats the supplied arguments according to the format string

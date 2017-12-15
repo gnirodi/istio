@@ -17,6 +17,14 @@ package envoy
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/emicklei/go-restful"
+	"github.com/golang/glog"
+	"github.com/hashicorp/go-multierror"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/proxy"
+	"istio.io/istio/pilot/tools/version"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -24,16 +32,6 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
-
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
-	"github.com/hashicorp/go-multierror"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/proxy"
-	"istio.io/istio/pilot/tools/version"
 )
 
 const (

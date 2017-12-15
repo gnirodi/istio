@@ -18,16 +18,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
-
 	pbd "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/template"
+	"sync"
 )
 
 type (

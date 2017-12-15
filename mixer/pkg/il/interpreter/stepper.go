@@ -17,7 +17,6 @@ package interpreter
 import (
 	"bytes"
 	"fmt"
-
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/il"
 	"istio.io/istio/mixer/pkg/il/text"

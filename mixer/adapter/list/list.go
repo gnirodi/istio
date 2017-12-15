@@ -18,20 +18,18 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	rpc "github.com/googleapis/googleapis/google/rpc"
 	"io"
 	"io/ioutil"
+	"istio.io/istio/mixer/adapter/list/config"
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/template/listentry"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
-
-	rpc "github.com/googleapis/googleapis/google/rpc"
-
-	"istio.io/istio/mixer/adapter/list/config"
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/template/listentry"
 )
 
 type (

@@ -19,17 +19,15 @@ package mockapi // import "istio.io/istio/mixer/pkg/mockapi"
 import (
 	"errors"
 	"fmt"
-	"net"
-	"time"
-
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-
 	mixerpb "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/status"
+	"net"
+	"time"
 )
 
 // DefaultAmount is the default quota amount to use in testing (1).

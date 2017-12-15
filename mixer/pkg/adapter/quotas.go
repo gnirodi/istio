@@ -15,9 +15,8 @@
 package adapter
 
 import (
-	"time"
-
 	rpc "github.com/googleapis/googleapis/google/rpc"
+	"time"
 )
 
 type (

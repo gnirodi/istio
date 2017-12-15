@@ -17,11 +17,10 @@ package util
 import (
 	"encoding/json"
 	"flag"
+	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"github.com/golang/glog"
 )
 
 const (

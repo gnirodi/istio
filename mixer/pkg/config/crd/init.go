@@ -15,10 +15,6 @@
 package crd
 
 import (
-	"net/url"
-	"strings"
-	"time"
-
 	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,12 +23,14 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	"net/url"
+	"strings"
+	"time"
 	// import GKE cluster authentication plugin
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	// import OIDC cluster authentication plugin, e.g. for Tectonic
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-
 	"istio.io/istio/mixer/pkg/config/store"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
 // defaultDiscoveryBuilder builds the actual discovery client using the kubernetes config.

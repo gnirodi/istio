@@ -18,18 +18,16 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"github.com/ghodss/yaml"
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
+	dpb "istio.io/api/mixer/v1/config/descriptor"
+	pb "istio.io/istio/mixer/pkg/config/proto"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/ghodss/yaml"
-	"github.com/gogo/protobuf/jsonpb"
-	"github.com/gogo/protobuf/proto"
-
-	dpb "istio.io/api/mixer/v1/config/descriptor"
-	pb "istio.io/istio/mixer/pkg/config/proto"
 )
 
 type (

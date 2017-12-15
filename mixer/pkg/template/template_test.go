@@ -15,11 +15,10 @@
 package template
 
 import (
+	"istio.io/istio/mixer/pkg/adapter"
 	"reflect"
 	"strings"
 	"testing"
-
-	"istio.io/istio/mixer/pkg/adapter"
 )
 
 func TestGetTemplateInfo(t *testing.T) {

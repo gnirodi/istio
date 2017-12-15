@@ -16,16 +16,15 @@ package config
 
 import (
 	"errors"
+	"istio.io/istio/mixer/pkg/adapter"
+	"istio.io/istio/mixer/pkg/config/descriptor"
+	"istio.io/istio/mixer/pkg/config/store"
+	"istio.io/istio/mixer/pkg/template"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	"istio.io/istio/mixer/pkg/adapter"
-	"istio.io/istio/mixer/pkg/config/descriptor"
-	"istio.io/istio/mixer/pkg/config/store"
-	"istio.io/istio/mixer/pkg/template"
 )
 
 const (

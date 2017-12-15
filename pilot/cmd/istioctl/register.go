@@ -16,10 +16,8 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-
 	"istio.io/istio/pilot/platform/kube"
 )
 

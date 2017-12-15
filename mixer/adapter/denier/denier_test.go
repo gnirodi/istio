@@ -19,14 +19,13 @@ package denier
 
 import (
 	"context"
-	"reflect"
-	"testing"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapter/test"
 	"istio.io/istio/mixer/template/checknothing"
 	"istio.io/istio/mixer/template/listentry"
 	"istio.io/istio/mixer/template/quota"
+	"reflect"
+	"testing"
 )
 
 func TestBasic(t *testing.T) {

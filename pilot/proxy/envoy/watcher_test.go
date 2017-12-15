@@ -19,16 +19,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/howeyc/fsnotify"
 	"io/ioutil"
+	"istio.io/istio/pilot/proxy"
 	"os"
 	"path"
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/howeyc/fsnotify"
-
-	"istio.io/istio/pilot/proxy"
 )
 
 type TestAgent struct {

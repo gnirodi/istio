@@ -18,11 +18,10 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-	"time"
-
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
+	"strconv"
+	"time"
 )
 
 type routingToEgress struct {

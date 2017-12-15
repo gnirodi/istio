@@ -16,7 +16,6 @@ package mock
 
 import (
 	"fmt"
-
 	"google.golang.org/grpc"
 )
 

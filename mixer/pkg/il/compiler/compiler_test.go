@@ -16,9 +16,6 @@ package compiler
 
 import (
 	"fmt"
-	"strings"
-	"testing"
-
 	"istio.io/istio/mixer/pkg/config/descriptor"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/il"
@@ -26,6 +23,8 @@ import (
 	"istio.io/istio/mixer/pkg/il/runtime"
 	ilt "istio.io/istio/mixer/pkg/il/testing"
 	"istio.io/istio/mixer/pkg/il/text"
+	"strings"
+	"testing"
 )
 
 func TestCompiler_SingleExpressionSession(t *testing.T) {

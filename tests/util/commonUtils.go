@@ -17,6 +17,8 @@ package util
 import (
 	"context"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/google/go-github/github"
 	"io"
 	"io/ioutil"
 	"log"
@@ -26,9 +28,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
-	"github.com/google/go-github/github"
 )
 
 const (

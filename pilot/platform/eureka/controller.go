@@ -15,12 +15,10 @@
 package eureka
 
 import (
+	"github.com/golang/glog"
+	"istio.io/istio/pilot/model"
 	"reflect"
 	"time"
-
-	"github.com/golang/glog"
-
-	"istio.io/istio/pilot/model"
 )
 
 type serviceHandler func(*model.Service, model.Event)

@@ -16,13 +16,11 @@ package server
 
 import (
 	"fmt"
-	"net"
-	"net/http"
-
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"istio.io/istio/mixer/pkg/version"
+	"net"
+	"net/http"
 )
 
 type monitor struct {

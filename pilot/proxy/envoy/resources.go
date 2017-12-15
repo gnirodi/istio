@@ -15,15 +15,13 @@
 package envoy
 
 import (
-	"sort"
-	"strings"
-	"time"
-
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
-
 	"istio.io/istio/pilot/model"
+	"sort"
+	"strings"
+	"time"
 )
 
 const (

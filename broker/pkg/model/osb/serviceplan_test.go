@@ -15,12 +15,10 @@
 package osb
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	brokerconfig "istio.io/api/broker/v1/config"
 	"reflect"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
-
-	brokerconfig "istio.io/api/broker/v1/config"
 )
 
 func TestNewServicePlan(t *testing.T) {

@@ -16,13 +16,11 @@ package config
 
 import (
 	"errors"
-	"reflect"
-	"testing"
-
 	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/mock/gomock"
-
 	brokerconfig "istio.io/api/broker/v1/config"
+	"reflect"
+	"testing"
 )
 
 type testStore struct {

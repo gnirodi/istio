@@ -19,7 +19,6 @@ package envoy
 
 import (
 	"github.com/golang/protobuf/ptypes"
-
 	routing "istio.io/api/routing/v1alpha1"
 )
 

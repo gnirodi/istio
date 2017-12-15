@@ -16,7 +16,6 @@ package aspect
 
 import (
 	"fmt"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
 )

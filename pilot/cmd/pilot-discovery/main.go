@@ -16,15 +16,13 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"time"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"istio.io/istio/pilot/cmd"
 	"istio.io/istio/pilot/cmd/pilot-discovery/server"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"time"
 )
 
 var (

@@ -16,9 +16,7 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/golang/glog"
-
 	brokerconfig "istio.io/api/broker/v1/config"
 )
 

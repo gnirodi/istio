@@ -16,15 +16,13 @@ package grpc
 
 import (
 	"fmt"
-	"strings"
-
 	oidc "github.com/coreos/go-oidc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
-
 	"istio.io/istio/security/pkg/pki"
+	"strings"
 )
 
 const (

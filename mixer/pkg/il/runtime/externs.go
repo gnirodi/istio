@@ -16,14 +16,13 @@ package runtime
 
 import (
 	"fmt"
+	config "istio.io/api/mixer/v1/config/descriptor"
+	"istio.io/istio/mixer/pkg/expr"
+	"istio.io/istio/mixer/pkg/il/interpreter"
 	"net"
 	"regexp"
 	"strings"
 	"time"
-
-	config "istio.io/api/mixer/v1/config/descriptor"
-	"istio.io/istio/mixer/pkg/expr"
-	"istio.io/istio/mixer/pkg/il/interpreter"
 )
 
 // Externs contains the list of standard external functions used during evaluation.

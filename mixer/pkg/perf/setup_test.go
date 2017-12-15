@@ -16,10 +16,9 @@ package perf
 
 import (
 	"fmt"
+	"istio.io/api/mixer/v1"
 	"strings"
 	"testing"
-
-	"istio.io/api/mixer/v1"
 )
 
 var tests = []struct {

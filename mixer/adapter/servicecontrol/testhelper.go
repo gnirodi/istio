@@ -17,9 +17,8 @@ package servicecontrol
 import (
 	"encoding/json"
 	"errors"
-	"reflect"
-
 	sc "google.golang.org/api/servicecontrol/v1"
+	"reflect"
 )
 
 type mockSvcctrlClient struct {

@@ -15,7 +15,10 @@
 package server_test
 
 import (
+	"github.com/golang/protobuf/ptypes"
 	"io/ioutil"
+	"istio.io/istio/pilot/cmd/pilot-discovery/server"
+	"istio.io/istio/pilot/proxy/envoy"
 	"net"
 	"net/http"
 	"os"
@@ -23,11 +26,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/golang/protobuf/ptypes"
-
-	"istio.io/istio/pilot/cmd/pilot-discovery/server"
-	"istio.io/istio/pilot/proxy/envoy"
 )
 
 type env struct {

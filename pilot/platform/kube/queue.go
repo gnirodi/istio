@@ -15,13 +15,11 @@
 package kube
 
 import (
+	"github.com/golang/glog"
+	"istio.io/istio/pilot/model"
+	"k8s.io/client-go/util/flowcontrol"
 	"sync"
 	"time"
-
-	"github.com/golang/glog"
-	"k8s.io/client-go/util/flowcontrol"
-
-	"istio.io/istio/pilot/model"
 )
 
 // Queue of work tickets processed using a rate-limiting loop

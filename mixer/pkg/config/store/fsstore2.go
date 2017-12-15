@@ -19,14 +19,13 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"github.com/ghodss/yaml"
+	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"time"
-
-	"github.com/ghodss/yaml"
-	"github.com/golang/glog"
 )
 
 const defaultDuration = time.Second / 2

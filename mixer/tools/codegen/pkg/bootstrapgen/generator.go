@@ -17,21 +17,19 @@ package bootstrapgen
 import (
 	"bytes"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"go/format"
+	"golang.org/x/tools/imports"
 	"io/ioutil"
+	"istio.io/api/mixer/v1/config/descriptor"
+	tmplPkg "istio.io/istio/mixer/tools/codegen/pkg/bootstrapgen/template"
+	"istio.io/istio/mixer/tools/codegen/pkg/modelgen"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"text/template"
-
-	"github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"golang.org/x/tools/imports"
-
-	"istio.io/api/mixer/v1/config/descriptor"
-	tmplPkg "istio.io/istio/mixer/tools/codegen/pkg/bootstrapgen/template"
-	"istio.io/istio/mixer/tools/codegen/pkg/modelgen"
 )
 
 // Generator creates a Go file that will be build inside mixer framework. The generated file contains all the

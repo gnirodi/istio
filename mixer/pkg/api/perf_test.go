@@ -16,20 +16,18 @@ package api
 
 import (
 	"context"
-	"net"
-	"sync"
-	"testing"
-	"time"
-
 	rpc "github.com/googleapis/googleapis/google/rpc"
 	"google.golang.org/grpc"
-
 	mixerpb "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/aspect"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/status"
+	"net"
+	"sync"
+	"testing"
+	"time"
 )
 
 type benchState struct {

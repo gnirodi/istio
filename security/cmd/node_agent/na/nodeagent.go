@@ -16,16 +16,14 @@ package na
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
 	"istio.io/istio/security/pkg/pki/ca"
 	"istio.io/istio/security/pkg/platform"
 	"istio.io/istio/security/pkg/workload"
 	pb "istio.io/istio/security/proto"
+	"time"
 )
 
 // CAGrpcClient is for implementing the GRPC client to talk to CA.

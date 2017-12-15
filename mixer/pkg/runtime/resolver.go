@@ -17,17 +17,15 @@ package runtime
 import (
 	"errors"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus"
+	adptTmpl "istio.io/api/mixer/v1/template"
+	"istio.io/istio/mixer/pkg/attribute"
+	"istio.io/istio/mixer/pkg/expr"
 	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
-
-	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/prometheus"
-
-	adptTmpl "istio.io/api/mixer/v1/template"
-	"istio.io/istio/mixer/pkg/attribute"
-	"istio.io/istio/mixer/pkg/expr"
 )
 
 // Rule represents a runtime view of cpb.Rule.

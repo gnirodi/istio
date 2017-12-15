@@ -17,14 +17,13 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
-	"regexp"
-
 	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	multierror "github.com/hashicorp/go-multierror"
 	yaml2 "gopkg.in/yaml.v2"
+	"reflect"
+	"regexp"
 )
 
 const (

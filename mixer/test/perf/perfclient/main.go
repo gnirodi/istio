@@ -19,9 +19,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
 	"istio.io/istio/mixer/pkg/perf"
+	"os"
 )
 
 func main() {

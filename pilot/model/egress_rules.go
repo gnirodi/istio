@@ -17,11 +17,9 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"sort"
-
 	multierror "github.com/hashicorp/go-multierror"
-
 	routing "istio.io/api/routing/v1alpha1"
+	"sort"
 )
 
 // RejectConflictingEgressRules rejects conflicting egress rules.

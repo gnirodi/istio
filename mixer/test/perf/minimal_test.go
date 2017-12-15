@@ -17,11 +17,10 @@
 package perftests
 
 import (
-	"testing"
-
 	"istio.io/istio/mixer/adapter"
 	"istio.io/istio/mixer/pkg/perf"
 	generatedTmplRepo "istio.io/istio/mixer/template"
+	"testing"
 )
 
 const (

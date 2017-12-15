@@ -15,11 +15,10 @@
 package crd
 
 import (
-	"testing"
-	"time"
-
 	"istio.io/istio/pilot/platform/kube"
 	"istio.io/istio/pilot/test/mock"
+	"testing"
+	"time"
 )
 
 const (

@@ -15,16 +15,14 @@
 package cmd
 
 import (
-	"sort"
-
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
-
 	"istio.io/istio/mixer/cmd/shared"
 	pkgadapter "istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapterManager"
 	"istio.io/istio/mixer/pkg/aspect"
 	"istio.io/istio/mixer/pkg/config"
+	"sort"
 )
 
 func adapterCmd(legacyAdapters []pkgadapter.RegisterFn, printf shared.FormatFn) *cobra.Command {

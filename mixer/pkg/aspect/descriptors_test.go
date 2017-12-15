@@ -15,12 +15,11 @@
 package aspect
 
 import (
+	dpb "istio.io/api/mixer/v1/config/descriptor"
+	"istio.io/istio/mixer/pkg/adapter"
 	"strconv"
 	"strings"
 	"testing"
-
-	dpb "istio.io/api/mixer/v1/config/descriptor"
-	"istio.io/istio/mixer/pkg/adapter"
 )
 
 func TestFromPbType(t *testing.T) {

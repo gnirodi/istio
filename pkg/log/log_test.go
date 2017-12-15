@@ -16,6 +16,9 @@ package log
 
 import (
 	"errors"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc/grpclog"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,10 +26,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"google.golang.org/grpc/grpclog"
 )
 
 func TestBasic(t *testing.T) {

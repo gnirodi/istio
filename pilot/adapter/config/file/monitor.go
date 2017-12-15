@@ -15,18 +15,16 @@
 package file
 
 import (
+	"github.com/golang/glog"
 	"io/ioutil"
+	"istio.io/istio/pilot/adapter/config/crd"
+	"istio.io/istio/pilot/model"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
-
-	"istio.io/istio/pilot/adapter/config/crd"
-	"istio.io/istio/pilot/model"
 )
 
 const (

@@ -25,10 +25,9 @@ package model
 import (
 	"bytes"
 	"fmt"
+	meshconfig "istio.io/api/mesh/v1alpha1"
 	"sort"
 	"strings"
-
-	meshconfig "istio.io/api/mesh/v1alpha1"
 )
 
 // Service describes an Istio service (e.g., catalog.mystore.com:8080)

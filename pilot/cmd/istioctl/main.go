@@ -17,17 +17,17 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"strings"
-	"text/tabwriter"
-
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
+	"io"
+	"io/ioutil"
+	"istio.io/istio/pilot/adapter/config/crd"
+	"istio.io/istio/pilot/cmd"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/platform/kube"
+	"istio.io/istio/pilot/tools/version"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
@@ -35,12 +35,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"istio.io/istio/pilot/adapter/config/crd"
-	"istio.io/istio/pilot/cmd"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/platform/kube"
-	"istio.io/istio/pilot/tools/version"
+	"net/url"
+	"os"
+	"strings"
+	"text/tabwriter"
 )
 
 const (

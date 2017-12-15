@@ -17,18 +17,16 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"testing"
-
 	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
-
 	istio_mixer_v1 "istio.io/api/mixer/v1"
 	testEnv "istio.io/istio/mixer/pkg/server"
 	spyAdapter "istio.io/istio/mixer/test/spyAdapter"
 	e2eTmpl "istio.io/istio/mixer/test/spyAdapter/template"
 	apaTmpl "istio.io/istio/mixer/test/spyAdapter/template/apa"
 	reportTmpl "istio.io/istio/mixer/test/spyAdapter/template/report"
+	"reflect"
+	"testing"
 )
 
 const (

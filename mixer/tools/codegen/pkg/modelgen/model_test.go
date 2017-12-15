@@ -16,13 +16,12 @@ package modelgen
 
 import (
 	"fmt"
+	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"io/ioutil"
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 )
 
 func TestErrorInTemplate(t *testing.T) {

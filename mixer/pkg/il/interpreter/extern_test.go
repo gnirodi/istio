@@ -15,9 +15,8 @@
 package interpreter
 
 import (
-	"testing"
-
 	"istio.io/istio/mixer/pkg/il"
+	"testing"
 )
 
 func TestExternFromFn_NotAFunction(t *testing.T) {

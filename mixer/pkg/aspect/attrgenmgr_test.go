@@ -16,10 +16,6 @@ package aspect
 
 import (
 	"errors"
-	"net"
-	"reflect"
-	"testing"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/adapter/test"
@@ -31,6 +27,9 @@ import (
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/il/evaluator"
 	"istio.io/istio/mixer/pkg/status"
+	"net"
+	"reflect"
+	"testing"
 )
 
 var (

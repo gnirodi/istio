@@ -17,12 +17,10 @@ package attribute
 import (
 	"bytes"
 	"fmt"
+	"github.com/golang/glog"
+	mixerpb "istio.io/api/mixer/v1"
 	"sort"
 	"sync"
-
-	"github.com/golang/glog"
-
-	mixerpb "istio.io/api/mixer/v1"
 )
 
 // TODO: consider implementing a pool of proto bags

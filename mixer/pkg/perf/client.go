@@ -17,9 +17,7 @@ package perf
 import (
 	"context"
 	"fmt"
-
 	"google.golang.org/grpc"
-
 	"istio.io/api/mixer/v1"
 )
 

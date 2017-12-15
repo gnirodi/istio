@@ -16,14 +16,13 @@ package file_test
 
 import (
 	"io/ioutil"
+	"istio.io/istio/pilot/adapter/config/file"
+	"istio.io/istio/pilot/adapter/config/memory"
+	"istio.io/istio/pilot/model"
 	"os"
 	"path"
 	"reflect"
 	"testing"
-
-	"istio.io/istio/pilot/adapter/config/file"
-	"istio.io/istio/pilot/adapter/config/memory"
-	"istio.io/istio/pilot/model"
 )
 
 var (

@@ -22,7 +22,6 @@ package aggregate
 import (
 	"errors"
 	"fmt"
-
 	"istio.io/istio/pilot/model"
 )
 

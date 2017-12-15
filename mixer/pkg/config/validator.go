@@ -30,19 +30,17 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config/descriptor"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/template"
+	"strings"
 )
 
 type (

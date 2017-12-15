@@ -15,9 +15,8 @@
 package na
 
 import (
-	"time"
-
 	"istio.io/istio/security/pkg/platform"
+	"time"
 )
 
 const (

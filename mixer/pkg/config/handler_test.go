@@ -16,19 +16,17 @@ package config
 
 import (
 	"fmt"
-	"reflect"
-	"sort"
-	"strings"
-	"testing"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/wrappers"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/il/testing"
 	tmpl "istio.io/istio/mixer/pkg/template"
+	"reflect"
+	"sort"
+	"strings"
+	"testing"
 )
 
 type fakeTmplRepo struct {

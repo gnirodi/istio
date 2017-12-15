@@ -21,10 +21,8 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-
 	mixc "istio.io/istio/mixer/cmd/mixc/cmd"
 	mixs "istio.io/istio/mixer/cmd/mixs/cmd"
 	"istio.io/istio/mixer/cmd/shared"

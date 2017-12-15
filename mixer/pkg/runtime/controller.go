@@ -16,12 +16,7 @@ package runtime
 
 import (
 	"fmt"
-	"strings"
-	"sync/atomic"
-	"time"
-
 	"github.com/golang/glog"
-
 	adptTmpl "istio.io/api/mixer/v1/template"
 	"istio.io/istio/mixer/pkg/adapter"
 	cpb "istio.io/istio/mixer/pkg/config/proto"
@@ -29,6 +24,9 @@ import (
 	"istio.io/istio/mixer/pkg/expr"
 	"istio.io/istio/mixer/pkg/pool"
 	"istio.io/istio/mixer/pkg/template"
+	"strings"
+	"sync/atomic"
+	"time"
 )
 
 // Controller is responsible for watching configuration using the Store2 API.

@@ -16,10 +16,9 @@ package util
 
 import (
 	"errors"
+	"github.com/pmezard/go-difflib/difflib"
 	"io/ioutil"
 	"strings"
-
-	"github.com/pmezard/go-difflib/difflib"
 )
 
 // Compare compares two byte slices. It returns an error with a

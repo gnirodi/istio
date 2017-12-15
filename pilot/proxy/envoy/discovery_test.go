@@ -17,19 +17,17 @@ package envoy
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
 	restful "github.com/emicklei/go-restful"
-
+	"io/ioutil"
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	"istio.io/istio/pilot/adapter/config/memory"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/proxy"
 	"istio.io/istio/pilot/test/mock"
 	"istio.io/istio/pilot/test/util"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 // Implement minimal methods to satisfy model.Controller interface for

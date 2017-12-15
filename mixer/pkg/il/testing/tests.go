@@ -16,13 +16,12 @@ package ilt
 
 import (
 	"fmt"
-	"net"
-	"strings"
-	"time"
-
 	pbv "istio.io/api/mixer/v1/config/descriptor"
 	pb "istio.io/istio/mixer/pkg/config/proto"
 	"istio.io/istio/mixer/pkg/expr"
+	"net"
+	"strings"
+	"time"
 )
 
 var duration19, _ = time.ParseDuration("19ms")

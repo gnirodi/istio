@@ -17,14 +17,12 @@ package servicecontrol
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/pborman/uuid"
 	sc "google.golang.org/api/servicecontrol/v1"
-
 	"istio.io/istio/mixer/adapter/servicecontrol/config"
 	"istio.io/istio/mixer/adapter/servicecontrol/template/servicecontrolreport"
 	"istio.io/istio/mixer/pkg/adapter"
+	"time"
 )
 
 type (

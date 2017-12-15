@@ -15,9 +15,8 @@
 package kube
 
 import (
-	"testing"
-
 	"k8s.io/api/core/v1"
+	"testing"
 )
 
 func TestStr2NamedPort(t *testing.T) {

@@ -15,12 +15,10 @@
 package consul
 
 import (
-	"time"
-
 	"github.com/golang/glog"
 	"github.com/hashicorp/consul/api"
-
 	"istio.io/istio/pilot/model"
+	"time"
 )
 
 // Controller communicates with Consul and monitors for changes

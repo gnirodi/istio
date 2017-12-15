@@ -17,7 +17,6 @@ package test
 
 import (
 	"errors"
-
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config"
 )

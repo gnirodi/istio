@@ -15,14 +15,13 @@
 package main
 
 import (
-	"os"
-
 	adapter "istio.io/istio/mixer/adapter"
 	"istio.io/istio/mixer/cmd/mixs/cmd"
 	"istio.io/istio/mixer/cmd/shared"
 	adptr "istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/template"
 	generatedTmplRepo "istio.io/istio/mixer/template"
+	"os"
 )
 
 func supportedTemplates() map[string]template.Info {

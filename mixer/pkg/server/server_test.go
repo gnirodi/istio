@@ -17,12 +17,7 @@ package server
 import (
 	"context"
 	"errors"
-	"net"
-	"strconv"
-	"testing"
-
 	"google.golang.org/grpc"
-
 	mixerpb "istio.io/api/mixer/v1"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/config/store"
@@ -31,6 +26,9 @@ import (
 	"istio.io/istio/mixer/pkg/pool"
 	mixerRuntime "istio.io/istio/mixer/pkg/runtime"
 	"istio.io/istio/mixer/pkg/template"
+	"net"
+	"strconv"
+	"testing"
 )
 
 const (

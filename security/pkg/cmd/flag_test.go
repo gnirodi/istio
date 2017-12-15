@@ -16,10 +16,9 @@ package cmd
 
 import (
 	"flag"
-	"testing"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"testing"
 )
 
 func TestInitializeFlags(t *testing.T) {

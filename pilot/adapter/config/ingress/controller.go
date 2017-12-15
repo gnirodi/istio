@@ -18,20 +18,18 @@ package ingress
 
 import (
 	"errors"
-	"reflect"
-	"time"
-
 	"github.com/golang/glog"
+	meshconfig "istio.io/api/mesh/v1alpha1"
+	"istio.io/istio/pilot/model"
+	"istio.io/istio/pilot/platform/kube"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-
-	meshconfig "istio.io/api/mesh/v1alpha1"
-	"istio.io/istio/pilot/model"
-	"istio.io/istio/pilot/platform/kube"
+	"reflect"
+	"time"
 )
 
 type controller struct {

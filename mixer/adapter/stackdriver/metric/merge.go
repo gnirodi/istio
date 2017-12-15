@@ -17,16 +17,14 @@ package metric
 import (
 	"encoding/binary"
 	"fmt"
-	"hash/fnv"
-	"time"
-
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/genproto/googleapis/api/distribution"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	"google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoring "google.golang.org/genproto/googleapis/monitoring/v3"
-
+	"hash/fnv"
 	"istio.io/istio/mixer/pkg/adapter"
+	"time"
 )
 
 const usec int32 = int32(1 * time.Microsecond)

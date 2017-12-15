@@ -16,12 +16,10 @@ package helper
 
 import (
 	"fmt"
+	gapiopts "google.golang.org/api/option"
+	"istio.io/istio/mixer/adapter/stackdriver/config"
 	"reflect"
 	"testing"
-
-	gapiopts "google.golang.org/api/option"
-
-	"istio.io/istio/mixer/adapter/stackdriver/config"
 )
 
 func TestToOpts(t *testing.T) {

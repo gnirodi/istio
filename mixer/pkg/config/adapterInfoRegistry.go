@@ -16,11 +16,9 @@ package config
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/golang/glog"
-
 	"istio.io/istio/mixer/pkg/adapter"
+	"strings"
 )
 
 type adapterInfoRegistry struct {

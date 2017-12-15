@@ -17,11 +17,8 @@ package evaluator
 import (
 	"errors"
 	"fmt"
-	"sync"
-
 	"github.com/golang/glog"
 	lru "github.com/hashicorp/golang-lru"
-
 	pb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/attribute"
 	"istio.io/istio/mixer/pkg/config"
@@ -31,6 +28,7 @@ import (
 	"istio.io/istio/mixer/pkg/il/compiler"
 	"istio.io/istio/mixer/pkg/il/interpreter"
 	"istio.io/istio/mixer/pkg/il/runtime"
+	"sync"
 )
 
 // IL is an implementation of expr.Evaluator that also exposes specific methods.

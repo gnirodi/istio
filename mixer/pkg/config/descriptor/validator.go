@@ -16,10 +16,9 @@ package descriptor
 
 import (
 	"fmt"
-	"math"
-
 	dpb "istio.io/api/mixer/v1/config/descriptor"
 	"istio.io/istio/mixer/pkg/adapter"
+	"math"
 )
 
 // ValidateLogEntry validates a log entry descriptor.

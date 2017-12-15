@@ -17,16 +17,14 @@ package envoy
 import (
 	"errors"
 	"fmt"
-	"path"
-	"sort"
-	"strings"
-
 	"github.com/golang/glog"
-
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	routing "istio.io/api/routing/v1alpha1"
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/proxy"
+	"path"
+	"sort"
+	"strings"
 )
 
 func buildIngressListeners(mesh *meshconfig.MeshConfig,

@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-
 	"istio.io/istio/mixer/cmd/shared"
 	"istio.io/istio/mixer/pkg/adapter"
 	"istio.io/istio/mixer/pkg/il/evaluator"
