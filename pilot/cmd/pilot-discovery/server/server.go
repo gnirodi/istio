@@ -152,13 +152,13 @@ type PilotArgs struct {
 
 // Server contains the runtime configuration for the Pilot discovery service.
 type Server struct {
-	mesh              *meshconfig.MeshConfig
+	mesh             *meshconfig.MeshConfig
 	meshResourceView *aggregate.MeshResourceView
-	configController  model.ConfigStoreCache
-	mixerSAN          []string
-	kubeClient        kubernetes.Interface
-	startFuncs        []startFunc
-	listeningAddr     net.Addr
+	configController model.ConfigStoreCache
+	mixerSAN         []string
+	kubeClient       kubernetes.Interface
+	startFuncs       []startFunc
+	listeningAddr    net.Addr
 }
 
 // NewServer creates a new Server instance based on the provided arguments.
