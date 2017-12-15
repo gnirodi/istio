@@ -19,7 +19,6 @@ go_test(
     name = "go_default_test",
     size = "small",
     srcs = [
-        "mesh_resource_set_test.go",
         "mesh_view_test.go",
     ],
     library = ":go_default_library",
