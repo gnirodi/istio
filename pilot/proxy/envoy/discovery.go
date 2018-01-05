@@ -25,13 +25,15 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/emicklei/go-restful"
-	"github.com/golang/glog"
-	"github.com/hashicorp/go-multierror"
+	restful "github.com/emicklei/go-restful"
+	_ "github.com/golang/glog" // TODO(nmittler): Remove this
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"istio.io/istio/pilot/model"
 	"istio.io/istio/pilot/proxy"
 	"istio.io/istio/pilot/tools/version"
+	"istio.io/istio/pkg/log"
 )
 
 const (
@@ -186,7 +188,7 @@ func (c *discoveryCache) updateCachedDiscoveryResponse(key string, resourceCount
 		cacheSizeDelta = float64(len(key) + len(data))
 	} else if entry.data != nil {
 		cacheSizeDelta = float64(len(data) - len(entry.data))
-		glog.Warningf("Overriding cached data for entry %v", key)
+		log.Warnf("Overriding cached data for entry %v", key)
 	}
 	entry.resourceCount = resourceCount
 	entry.data = data
@@ -281,7 +283,7 @@ type DiscoveryServiceOptions struct {
 }
 
 // NewDiscoveryService creates an Envoy discovery service on a given port
-func NewDiscoveryService(ctl model.Controller, configCache model.ConfigStoreCache,
+func NewDiscoveryService(ctl model.UpdateNotifier, configCache model.ConfigStoreCache,
 	environment proxy.Environment, o DiscoveryServiceOptions) (*DiscoveryService, error) {
 	out := &DiscoveryService{
 		Environment: environment,
@@ -303,14 +305,7 @@ func NewDiscoveryService(ctl model.Controller, configCache model.ConfigStoreCach
 
 	// Flush cached discovery responses whenever services, service
 	// instances, or routing configuration changes.
-	serviceHandler := func(*model.Service, model.Event) { out.clearCache() }
-	if err := ctl.AppendServiceHandler(serviceHandler); err != nil {
-		return nil, err
-	}
-	instanceHandler := func(*model.ServiceInstance, model.Event) { out.clearCache() }
-	if err := ctl.AppendInstanceHandler(instanceHandler); err != nil {
-		return nil, err
-	}
+	ctl.SetCacheEvictionHandler(out)
 
 	if configCache != nil {
 		configHandler := func(model.Config, model.Event) { out.clearCache() }
@@ -330,6 +325,12 @@ func NewDiscoveryService(ctl model.Controller, configCache model.ConfigStoreCach
 	}
 
 	return out, nil
+}
+
+// EvictCache implements model.CacheEvictionHandler
+// TODO - cache eviction needs to be refactored
+func (ds *DiscoveryService) EvictCache(_ model.CacheReferences) {
+	ds.clearCache()
 }
 
 // Register adds routes a web service container. This is visible for testing purposes only.
@@ -406,7 +407,7 @@ func (ds *DiscoveryService) Register(container *restful.Container) {
 // connections. Content serving is started by this method, but is executed asynchronously. Serving can be cancelled
 // at any time by closing the provided stop channel.
 func (ds *DiscoveryService) Start(stop chan struct{}) (net.Addr, error) {
-	glog.Infof("Starting discovery service at %v", ds.server.Addr)
+	log.Infof("Starting discovery service at %v", ds.server.Addr)
 
 	addr := ds.server.Addr
 	if addr == "" {
@@ -420,7 +421,7 @@ func (ds *DiscoveryService) Start(stop chan struct{}) (net.Addr, error) {
 	go func() {
 		go func() {
 			if err := ds.server.Serve(listener); err != nil {
-				glog.Warning(err)
+				log.Warna(err)
 			}
 		}()
 
@@ -428,7 +429,7 @@ func (ds *DiscoveryService) Start(stop chan struct{}) (net.Addr, error) {
 		<-stop
 		err := ds.server.Close()
 		if err != nil {
-			glog.Warning(err)
+			log.Warna(err)
 		}
 	}()
 
@@ -451,7 +452,7 @@ func (ds *DiscoveryService) GetCacheStats(_ *restful.Request, response *restful.
 		stats[k] = v
 	}
 	if err := response.WriteEntity(discoveryCacheStats{stats}); err != nil {
-		glog.Warning(err)
+		log.Warna(err)
 	}
 }
 
@@ -464,7 +465,7 @@ func (ds *DiscoveryService) ClearCacheStats(_ *restful.Request, _ *restful.Respo
 }
 
 func (ds *DiscoveryService) clearCache() {
-	glog.Infof("Cleared discovery service cache")
+	log.Infof("Cleared discovery service cache")
 	ds.sdsCache.clear()
 	ds.cdsCache.clear()
 	ds.rdsCache.clear()
@@ -523,7 +524,7 @@ func (ds *DiscoveryService) ListAllEndpoints(_ *restful.Request, response *restf
 
 	if err := response.WriteEntity(services); err != nil {
 		incErrors(methodName)
-		glog.Warning(err)
+		log.Warna(err)
 	} else {
 		observeResources(methodName, uint32(len(services)))
 	}
@@ -720,15 +721,15 @@ func observeResources(methodName string, count uint32) {
 
 func errorResponse(methodName string, r *restful.Response, status int, msg string) {
 	incErrors(methodName)
-	glog.Warning(msg)
+	log.Warn(msg)
 	if err := r.WriteErrorString(status, msg); err != nil {
-		glog.Warning(err)
+		log.Warna(err)
 	}
 }
 
 func writeResponse(r *restful.Response, data []byte) {
 	r.WriteHeader(http.StatusOK)
 	if _, err := r.Write(data); err != nil {
-		glog.Warning(err)
+		log.Warna(err)
 	}
 }
