@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The ControllerView is a helper object that enables platform registry
-// specific Controllers to implement ServiceDiscovery and ServiceAccounts,
-// thereby reducing boiler plate code and tests needed by every platform Controller
-//
+// ControllerView is a platform independent abstraction used by Controllers
+// to synchronize the list of service endpoints used by the pilot with those
+// avaiable in the platform specific registry. It implements all the necessary
+// logic that's used for service discovery based on routing rules and endpoint
+// subsets. 
 // Typical Usage:
 //
 //   import "istio.io/istio/pilot/model"
@@ -26,449 +27,303 @@
 //   ...
 //   pc := MyPlatformController{model.NewControllerView()}
 //   ...
-//   var services []*model.Service
-//   var serviceInstances []*model.Service
-//   services = buildYourPlatformServiceList()
-//   serviceInstances = buildYourPlatformServiceInstanceList()
-//   pc.Reconcile(services, serviceInstances)
-
+//   var serviceEndpoints []*model.ServiceInstances
+//   serviceEndpoints = buildYourPlatformServiceEndpointList()
+//   pc.Reconcile(serviceEndpoints)
+//
 package model
 
 import (
-	"encoding/hex"
-	"math"
+    "math"
 	"net"
 	"reflect"
+    "strconv"
 	"sync"
+	
+	route "istio.io/api/routing/v1alpha2"
 )
 
 const (
-	// All labels below are for ControllerView internals only. These labels
-	// are by ServiceDiscovery method implementations of ControllerView.
+    // Label name used internally by ControllerView to fetch ServiceEndpoints
+    // by ServiceName. TODO It's possible that the prefix 'config.istio.io/pilot.'
+    // is fragile. We should likely introduce some governance to what label names
+    // used for Istio can be, to protect customers from stumbling
+    // into labeling their Endpoints with names used internally within Istio.	
+    labelServiceName 		= "config.istio.io/pilot.ServiceName"
 
-	// Prefix for labels used internally by the ControllerView
-	labelPilotPrefix = "config.istio.io/pilot."
+    // Label name used internally by ControllerView to fetch ServiceEndpoints
+    // by the Endpoint's Address	
+    labelEndpointAddress 	= "config.istio.io/pilot.EndpointAddress"
 
-	// Prefix for labels used internally by ControllerView for labels pertaining
-	// to Service properties
-	labelServicePrefix = labelPilotPrefix + "Service."
+    // Label name used internally by ControllerView to fetch ServiceEndpoints
+    // by the Endpoint's Protocol	
+    labelEndpointProtocol 	= "config.istio.io/pilot.EndpointProtocol"
 
-	// Label used internally by ControllerView to fetch services or instances
-	//  by Service Hostname
-	labelServiceName = labelServicePrefix + "hostname"
-
-	// Label used internally by ControllerView to fetch services or instances
-	// by the DNS name associated for the service
-	labelServiceExternalName = labelServicePrefix + "externalName"
-
-	// Label used internally by ControllerView to fetch services or instances
-	// by the service VIP. While ServiceDiscovery function parms may contain
-	// ipv4/v6 address, example 10.1.1.3, the value associated with
-	// this internal label is a normalized IPv6 address encoded in hex
-	labelServiceVIP = labelServicePrefix + "vip"
-
-	// Prefix for labels used internally by ControllerView for pertaining to
-	// to Service Instance properties
-	labelInstancePrefix = labelPilotPrefix + "ServiceInstance."
-
-	// Label used internally by ControllerView to fetch instances
-	// by instance IP. While ServiceDiscovery function parms may contain
-	// ipv4/v6 address, example 10.1.1.3, the value associated with
-	// this internal label is a normalized IPv6 address encoded in hex
-	labelInstanceIP = labelInstancePrefix + "ip"
-
-	// Label used internally by ControllerView to fetch instances
-	// by Port. While ServiceDiscovery function parms may contain
-	// alternate numeric formats for port numbers, ex: 80 or 0080
-	// etc, the value associated with this internal label is a
-	// normalized 16 bit int encoded in hex
-	labelInstancePort = labelInstancePrefix + "port"
-
-	// Label used internally by ControllerView to fetch instances
-	// by the named port.
-	labelInstanceNamedPort = labelInstancePrefix + "namedPort"
+    // Label name used internally by ControllerView to fetch ServiceEndpoints
+    // by the Endpoint's Address and named port	
+    labelEndpointNamedPort 	= "config.istio.io/pilot.EndpointNamedPort"
 )
 
-// ControllerView implements common storage of mesh entities like Service
-// and ServiceInstance objects and is intended to be used by individual
-// platform registry Controllers. Controller implementations call Reconcile()
-// to update the Controller's view with the most up-to-date list of mesh
-// entities available natively for that platform registry.
+// ControllerView is a platform independent abstraction used by Controllers
+// for maintaining a list of service endpoints used by this Pilot.
+// 
+// Controllers under https://github.com/istio/istio/tree/master/pilot/platform
+// update the list of service endpoints in this ControllerView with those
+// available in a platform specific service registry. 
 //
-// TODO adopt ControllerView into all platform registry implementations as part
-// of https://github.com/istio/istio/issues/1223.
-//
-// Although objects from each Controller are distinct, they implicitly follow the
-// following contraints:
-//
-// - Service objects: are unique across the mesh for the combination of their
-// Hostname and Address
-// - ServiceInstance objects: are unique across the mesh for the combination
-// of their Service.Hostname and Endpoint.Address and Endpoint.Port
-//
-// The ControllerView will never modify model.* objects. However to accommodate
-// multiple data representations of various properties of model.* objects, the
-// ControllerView normalizes the following properties to allow for uniform
-// query operations across the mesh:
-//
-// - Address: Fetches by Service and ServiceInstance addresses are
-// always normalized to their 16 byte IPv6 representation.
-// - Port: Given that 0080 and 80 are equivalent, port numbers are always normalized
-// by their numeric 16 bit value.
+// Under the hoods, the ControllerView implements the necessary
+// logic required for endpoint discovery based on routing rules
+// and endpoint subsets.
+// See https://github.com/istio/api/search?q=in%3Afile+"message+Subset"+language%3Aproto
+// This logic includes comparing the updated list provided by Controllers with
+// what this view holds and accordingly updating internal structures used for
+// endpoint discovery. 
 type ControllerView struct {
 
-	// serviceLabels holds the inverted map of label name/values to the keys in
-	// services for O(N) access involving labels versus O(N^2) access via services
-	serviceLabels viewLabels
+	// serviceEndpoints is a map of all the service instances the Controller
+	// has provided to this ControllerView. A service instance is uniquely
+	// identified by the mesh global service name, the endpoint address and port.
+	//
+	// The contraints imposed by ControllerView on ServiceEndpoints produced
+	// by Controllers are:
+	//
+	// - The service name is mesh global i.e. if 2 Controllers have instances
+	// with the same service name, all those instances are considered to be
+	// semantically identical, modulo the API version and other labels that
+	// may differ between instances. 
+	// - The ServiceEndpoints must be network reachable from _THIS_ Pilot.
+	// But otherwise the ControllerView makes no distinction between a
+	// ServiceInstance exposed by a single workload or a ServiceInstance exposed
+	// by a proxy that exposes a VIP. The VIP itself may be backed by multiple
+	// workloads behind that proxy and those workloads are not expected to be
+	// directly network reachable from _THIS_ Pilot.
+	// - For a given service name, the ServiceInstance's endpoint must be unique
+	// across the mesh, meaning 2 Controllers must never produce identical network
+	// endpoints (having the same Address and port) for the same service. However
+	// in esoteric Istio hybrid configuration scenarios it's possible that 2 different
+	// services may end up having the same Network endpoint.
+	//  
+	// The key to this map is a tuple of service name, address and port and is
+	// expected to be stable across various string representations of Addresses
+	// and ports. For example an IPv6 representation of an IPv4 address and the
+	// IPv4 address expressed in normal conventions will result in the same key.
+	serviceEndpoints map[string]*ServiceEndpoint
 
-	// services is a map maintained by the Controller with a composite key of
-	// Service.Hostname and Service.Address. The key is expected to be mesh unique
-	services map[string]*Service
+	// subsetDefinitions holds the metadata, basically the set of lable name values.
+	// The actual list of ServiceEndpoints that match these subset definitions is
+	// stored elsewhere. See subsetEndpoints.
+	//
+	// The key of this map is the same as what's used for the subsetEndpoints. The value
+	// holds key attributes and labels that define the subset.
+	subsetDefinitions map[string]*route.Subset
 
-	// instanceLabels holds the inverted map of label name/values to the keys in
-	// serviceInstances for O(N) access involving labels versus O(N^2) access via
-	// services
-	instanceLabels viewLabels
-
-	// serviceInstances is a map maintained by the Controller with a composite key
-	// of Service.Hostname, Endpoint.Address and Endpoint.Port. The key is expected
-	// to be mesh unique
-	serviceInstances map[string]*ServiceInstance
-
-	// Mutex guards updates to all model.* objects of the ControllerView
+    // subsetEndpoints is a reverse look up from key built off primary properties
+    // of a subset. Currently the key is the subset name. TODO: there are plans to
+    // allow subset names to be shared across services at which point the key
+    // needs to be <service name>|<subset-name>.
+    //
+    // The value is a keyset of service endpoint keys. EndpointKeys in the set
+    // are guaranteed to exist in serviceEndpoints and the corresponding ServiceEndpoint
+    // is guaranteed to satisfy the labels in the corresponding Subset
+	subsetEndpoints map[string]endpointKeySet
+	
+    // reverseLabelMap provides reverse lookup from label name > label value > EndpointKeys that
+    // match the label name and label value. It's indended primarily for quickly
+    // setting up the ControllerView in response to subset configuration changes without
+    // holding write locks for too long. 
+    // All EndpointKeys associated with each value in the associated
+    // valueKeySet are guaranteed to exist in endpointKeySet and the corresponding
+    // ServiceEndpoint is guaranteed to have a label with the label name.
+	reverseLabelMap	labelValues
+	
+	// Mutex guards guarantees consistency of updates to members shared across
+	// threads. See caveats for Reconcile()
 	mu sync.RWMutex
 }
 
-// viewKeySet is a set of controller view keys. All keys in the
-// key set must be of the same type:
-//
-// - Service keys are of the form [Service.Hostname][16 byte hex formatted hex formatted
-//	 IPv6 representation Service.Address]
-// - ServiceInstance keys are of the form [Service.Hostname][16 byte hex formatted IPv6
-//	 representation of Endpoint.Address][2 byte hex formatted Endpoint.Port]
-type viewKeySet map[string]bool
+type ServiceEndpoint struct {
+	// The mesh unique  a tuple of service name, address and port and is
+	// expected to be stable across various string representations of Addresses
+	// and ports. For example an IPv6 representation of an IPv4 address and the
+	// IPv4 address expressed in normal conventions will result in the same key.    
+    EndpointKey		string
+    // The name of the service for which this endpoint was created 
+    ServiceName		string
+    // The network address and port for this endpoint.
+    NetworkEndpoint NetworkEndpoint
+    Labels			Labels
+}
 
-// viewValues holds a map of label values to viewKeySet
-type viewValues map[string]viewKeySet
+// endpointKeySet is a unique set of EndpointKeys
+type endpointKeySet map[string]bool
 
-// viewLabels holds a map of label names to viewValues
-type viewLabels map[string]viewValues
+// valueKeySet associates a label value with an endpointKeySet. The EndpointKeys
+// in the associated endpointKeySet are
+// guaranteed to exist in serviceEndpoints and the corresponding
+// ServiceEndpoint is guaranteed to have one or more labels with this label value.
+type valueKeySet map[string]endpointKeySet
+
+// labelValues is a reverse lookup map from label name > label value > EndpointKeys that
+// match the label name and label value.
+// All EndpointKeys associated with each value in the associated
+// valueKeySet are guaranteed to exist in endpointKeySet and the corresponding
+// ServiceEndpoint is guaranteed to have a label with the label name.
+type labelValues map[string]valueKeySet
+
+func NewServiceEndpoint(serviceName string, networkEndpoint NetworkEndpoint, labels Labels) *ServiceEndpoint {
+    ip 			:= net.ParseIP(networkEndpoint.Address)
+    return &ServiceEndpoint {
+        EndpointKey: 		serviceName + "|" + ip.String() + "|" + strconv.Itoa(networkEndpoint.Port),
+        ServiceName: 		serviceName,
+        NetworkEndpoint:	networkEndpoint,
+        Labels:				labels,
+    }
+}
 
 // NewControllerView creates a new empty ControllerView for use by Controller implementations
 func NewControllerView() *ControllerView {
 	return &ControllerView{
-		serviceLabels:    viewLabels{},
-		services:         map[string]*Service{},
-		instanceLabels:   viewLabels{},
-		serviceInstances: map[string]*ServiceInstance{},
-		mu:               sync.RWMutex{},
+		serviceEndpoints:  	map[string]*ServiceEndpoint{},
+		subsetDefinitions:	map[string]*route.Subset{},
+		mu:               	sync.RWMutex{},
 	}
 }
 
 // Reconcile is intended to be called by individual platform registry Controllers to
-// update the ControllerView with the latest state of mesh entities that make up the
-// view. There should be only one thread calling Reconcile and the services and instances
-// passed to Reconcile must represent the complete state of the Controller.
-func (cv *ControllerView) Reconcile(svcs []*Service, instances []*ServiceInstance) {
-	cv.reconcileServices(svcs)
-	cv.reconcileServiceInstances(instances)
-}
+// update the ControllerView with the latest state of endpoints that make up the
+// view. There should be only one thread calling Reconcile and the endpoints
+// passed to Reconcile must represent the complete set of endpoints retrieved
+// for that platform registry.
+func (cv *ControllerView) Reconcile(endpoints []*ServiceEndpoint) {
+	// No need to synchronize reading cv.serviceEndpoints given this is the only writer
+	// thread. All modifications to serviceEndpoints ought to be done after locking cv.mu
+	// Start out with everything and only retain what's not in endpoints.
+	epsToDelete := make(map[string]*ServiceEndpoint, len(cv.serviceEndpoints))
+	for k, ep := range cv.serviceEndpoints {
+		epsToDelete[k] = ep
+	}    
 
-// Services implements ServiceDiscovery.Services()
-func (cv *ControllerView) Services() ([]*Service, error) {
-	cv.mu.RLock()
-	defer cv.mu.RUnlock()
-	svcKeySet := cv.serviceLabels.getAllKeysMatchingLabel(labelServiceName)
-	out := make([]*Service, len(svcKeySet))
-	i := 0
-	for k := range svcKeySet {
-		out[i] = cv.services[k]
-		i++
+	epsToAdd := make(map[string]*ServiceEndpoint, len(endpoints))
+	// Start out with everything that's provided by the controller and only retain what's not
+	// currently in cv.
+	for _, ep := range endpoints {
+		epsToAdd[ep.EndpointKey] = ep
+	}    
+    // Only contains what's in cv as well as endpoints but with
+    // differing labels.
+	epsToUpdate := map[string]*ServiceEndpoint{}
+	for k, expectedEp := range epsToAdd {
+		existingEp, found := epsToDelete[k]
+		if !found {
+			continue  // Needs to be added to ControllerView
+		}
+		if !reflect.DeepEqual(*expectedEp, *existingEp) {
+			epsToUpdate[k] = expectedEp
+		}
+		delete(epsToAdd, k)
+		delete(epsToDelete, k)
 	}
-	return out, nil
-}
-
-// GetService implements ServiceDiscovery.GetService()
-func (cv *ControllerView) GetService(hostname string) (*Service, error) {
-	lbls := Labels{labelServiceName: hostname}
-	services := cv.servicesByLabels(lbls)
-	if len(services) > 0 {
-		return services[0], nil
+	cv.mu.Lock()
+	defer cv.mu.Unlock()
+	for k, delEp := range epsToDelete {
+		cv.reconcileServiceEndpoint(k, delEp, EventDelete)
 	}
-	return nil, nil
+	for k, addEp := range epsToAdd {
+		cv.reconcileServiceEndpoint(k, addEp, EventAdd)
+	}
+	for k, updEp := range epsToUpdate {
+		cv.reconcileServiceEndpoint(k, updEp, EventUpdate)
+	}    
 }
 
-// Instances implements ServiceDiscovery.Instances()
-func (cv *ControllerView) Instances(hostname string, ports []string, labelCollection LabelsCollection) ([]*ServiceInstance, error) {
-	out := []*ServiceInstance{}
-	for _, port := range ports {
-		if len(labelCollection) > 0 {
-			for _, labels := range labelCollection {
-				labelsAndHostPort := labels.Copy()
-				labelsAndHostPort[labelInstanceNamedPort] = port
-				labelsAndHostPort[labelServiceName] = hostname
-				out = append(out, cv.serviceInstancesByLabels(labelsAndHostPort)...)
+// reconcileServiceEndpoint is expected to be called only from inside reconcile(). The caller is expected
+// to lock the resource view before calling this method()
+func (cv *ControllerView) reconcileServiceEndpoint(k string, ep *ServiceEndpoint, event Event) {
+    var epLabelAdd, epLabelDelete *ServiceEndpoint
+    switch event {
+        case EventDelete:
+            epLabelDelete = ep
+            break
+        case EventUpdate:
+            epLabelDelete = cv.serviceEndpoints[k]
+            epLabelAdd = ep
+            break
+        case EventAdd:
+            epLabelAdd = ep
+            break
+    }
+	if epLabelDelete != nil {
+		cv.reverseLabelMap.deleteLabel(k, labelServiceName, epLabelDelete.ServiceName)
+		cv.reverseLabelMap.deleteLabel(k, labelEndpointAddress,
+		    getNormalizedIP(epLabelDelete.NetworkEndpoint.Address))
+		if epLabelDelete.NetworkEndpoint.ServicePort != nil {
+			cv.reverseLabelMap.deleteLabel(k, labelEndpointProtocol,
+    			string(epLabelDelete.NetworkEndpoint.ServicePort.Protocol))
+			portName := epLabelDelete.NetworkEndpoint.ServicePort.Name
+			if portName == "" {
+			    portName = strconv.Itoa(epLabelDelete.NetworkEndpoint.ServicePort.Port)
+    			cv.reverseLabelMap.deleteLabel(k, labelEndpointNamedPort, portName)
 			}
 		} else {
-			labelsAndHostPort := Labels{
-				labelInstanceNamedPort: port,
-				labelServiceName:       hostname,
+		    portName := strconv.Itoa(epLabelDelete.NetworkEndpoint.Port)
+			cv.reverseLabelMap.deleteLabel(k, labelEndpointNamedPort, portName)
+		}
+		for label, value := range epLabelDelete.Labels {
+			cv.reverseLabelMap.deleteLabel(k, label, value)
+		}
+		delete(cv.serviceEndpoints, k)
+	}
+	if epLabelAdd != nil {
+		cv.reverseLabelMap.addLabel(k, labelServiceName, epLabelAdd.ServiceName)
+		cv.reverseLabelMap.addLabel(k, labelEndpointAddress,
+		    getNormalizedIP(epLabelAdd.NetworkEndpoint.Address))
+		if epLabelAdd.NetworkEndpoint.ServicePort != nil {
+			cv.reverseLabelMap.addLabel(k, labelEndpointProtocol,
+    			string(epLabelAdd.NetworkEndpoint.ServicePort.Protocol))
+			portName := epLabelAdd.NetworkEndpoint.ServicePort.Name
+			if portName == "" {
+			    portName := strconv.Itoa(epLabelAdd.NetworkEndpoint.ServicePort.Port)
+    			cv.reverseLabelMap.addLabel(k, labelEndpointNamedPort, portName)
 			}
-			out = append(out, cv.serviceInstancesByLabels(labelsAndHostPort)...)
+		} else {
+		    portName := strconv.Itoa(epLabelAdd.NetworkEndpoint.Port)
+			cv.reverseLabelMap.addLabel(k, labelEndpointNamedPort, portName)
 		}
-	}
-	return out, nil
-}
-
-// HostInstances implements ServiceDiscovery.HostInstances()
-func (cv *ControllerView) HostInstances(addrs map[string]bool) ([]*ServiceInstance, error) {
-	out := []*ServiceInstance{}
-	for addr := range addrs {
-		labels := Labels{labelInstanceIP: getNormalizedIP(addr)}
-		out = append(out, cv.serviceInstancesByLabels(labels)...)
-	}
-	return out, nil
-}
-
-// ManagementPorts implements ServiceDiscovery.ManagementPorts()
-// TODO - as part of https://github.com/istio/istio/issues/1223
-// Management ports should be accommodated in ServiceInstance
-// Currently implements
-func (cv *ControllerView) ManagementPorts(addr string) PortList {
-	// TODO Will be implemented as part of
-	// https://github.com/istio/istio/issues/1223
-	return PortList{}
-}
-
-// GetIstioServiceAccounts implements ServiceAccounts.GetIstioServiceAccounts()
-func (cv *ControllerView) GetIstioServiceAccounts(hostname string, ports []string) []string {
-	// Empty label set to fetch all instances matching hostname and ports
-	labelCollection := LabelsCollection{Labels{}}
-	instances, _ := cv.Instances(hostname, ports, labelCollection)
-	saSet := make(map[string]bool)
-	for _, instance := range instances {
-		if instance.ServiceAccount != "" {
-			saSet[instance.ServiceAccount] = true
+		for label, value := range epLabelAdd.Labels {
+			cv.reverseLabelMap.addLabel(k, label, value)
 		}
-		for _, svcAcct := range instance.Service.ServiceAccounts {
-			if svcAcct != "" {
-				saSet[svcAcct] = true
-			}
-		}
-	}
-	out := make([]string, len(saSet))
-	idx := 0
-	for acct := range saSet {
-		out[idx] = acct
-		idx++
-	}
-	return out
-}
-
-// servicesByLabels returns a list of Service objects that match all supplied
-// labels
-func (cv *ControllerView) servicesByLabels(labels Labels) []*Service {
-	cv.mu.RLock()
-	defer cv.mu.RUnlock()
-	svcKeySet := cv.serviceLabels.getKeysMatching(labels)
-	out := make([]*Service, len(svcKeySet))
-	i := 0
-	for k := range svcKeySet {
-		out[i] = cv.services[k]
-		i++
-	}
-	return out
-}
-
-// serviceInstancesByLabels returns a list of ServiceInstance objects that match all
-// supplied labels
-func (cv *ControllerView) serviceInstancesByLabels(labels Labels) []*ServiceInstance {
-	cv.mu.RLock()
-	defer cv.mu.RUnlock()
-	instKeySet := cv.instanceLabels.getKeysMatching(labels)
-	out := make([]*ServiceInstance, len(instKeySet))
-	i := 0
-	for k := range instKeySet {
-		out[i] = cv.serviceInstances[k]
-		i++
-	}
-	return out
-}
-
-// Reconciles services in the ControllerView with the list of expectedServices
-func (cv *ControllerView) reconcileServices(expectedServices []*Service) {
-	// No need to synchronize cv.services given this is the only writer thread
-	// All modifications to cv ought to be done after locking cv.mu
-	actualKeySvcMap := make(map[string]*Service, len(cv.services))
-	for k := range cv.services {
-		actualKeySvcMap[k] = cv.services[k]
-	}
-
-	expectedKeySvcMap := make(map[string]*Service, len(expectedServices))
-	for _, svc := range expectedServices {
-		svcKey := "[" + svc.Hostname + "]"
-		if svc.Address != "" {
-			svcKey = svcKey + "[" + getNormalizedIP(svc.Address) + "]"
-		}
-		expectedKeySvcMap[svcKey] = svc
-	}
-	updateSet := map[string]*Service{}
-	for k, expSvc := range expectedKeySvcMap {
-		actSvc, found := actualKeySvcMap[k]
-		if !found {
-			continue // Needs to be added to ControllerView
-		}
-		if !reflect.DeepEqual(*expSvc, *actSvc) {
-			updateSet[k] = expSvc
-		}
-		// Remaining would be ones that need adding
-		delete(expectedKeySvcMap, k)
-		// Remaining would be ones that need deleting
-		delete(actualKeySvcMap, k)
-	}
-	cv.mu.Lock()
-	defer cv.mu.Unlock()
-	for k, delSvc := range actualKeySvcMap {
-		cv.reconcileService(k, delSvc, EventDelete)
-	}
-	for k, addSvc := range expectedKeySvcMap {
-		cv.reconcileService(k, addSvc, EventAdd)
-	}
-	for k, updSvc := range updateSet {
-		cv.reconcileService(k, updSvc, EventUpdate)
+		cv.serviceEndpoints[k] = epLabelAdd
 	}
 }
 
-// Reconciles service instances in the ControllerView with the list of expectedInstances
-func (cv *ControllerView) reconcileServiceInstances(expectedInstances []*ServiceInstance) {
-	// No need to synchronize cv.services given this is the only writer thread
-	// All modifications to cv ought to be done after locking cv.mu
-	actualKeyInstMap := make(map[string]*ServiceInstance, len(cv.serviceInstances))
-	for k := range cv.serviceInstances {
-		actualKeyInstMap[k] = cv.serviceInstances[k]
-	}
-
-	expectedKeyInstMap := make(map[string]*ServiceInstance, len(expectedInstances))
-	for _, inst := range expectedInstances {
-		instKey := "[" + inst.Service.Hostname + "][" + getNormalizedIP(inst.Endpoint.Address) + "][" +
-			getNormalizedPort(inst.Endpoint.Port)
-		expectedKeyInstMap[instKey] = inst
-	}
-	updateSet := map[string]*ServiceInstance{}
-	for k, expInst := range expectedKeyInstMap {
-		actInst, found := actualKeyInstMap[k]
-		if !found {
-			continue // Needs to be added to ControllerView
-		}
-		if !reflect.DeepEqual(*expInst, *actInst) {
-			updateSet[k] = expInst
-		}
-		// Remaining would be ones that need adding
-		delete(expectedKeyInstMap, k)
-		// Remaining would be ones that need deleting
-		delete(actualKeyInstMap, k)
-	}
-	cv.mu.Lock()
-	defer cv.mu.Unlock()
-	for k, delInst := range actualKeyInstMap {
-		cv.reconcileServiceInstance(k, delInst, EventDelete)
-	}
-	for k, addInst := range expectedKeyInstMap {
-		cv.reconcileServiceInstance(k, addInst, EventAdd)
-	}
-	for k, updInst := range updateSet {
-		cv.reconcileServiceInstance(k, updInst, EventUpdate)
-	}
-}
-
-// reconcileService is expected to be called only from inside reconcileServices(). The caller is expected
-// to lock the resource view before calling this method()
-func (cv *ControllerView) reconcileService(k string, s *Service, e Event) {
-	old, found := cv.services[k]
-	if found {
-		cv.serviceLabels.deleteLabel(k, labelServiceName, old.Hostname)
-		if old.ExternalName != "" {
-			cv.serviceLabels.deleteLabel(k, labelServiceExternalName, old.ExternalName)
-		}
-		if old.Address != "" {
-			cv.serviceLabels.deleteLabel(k, labelServiceVIP, getNormalizedIP(old.Address))
-		}
-		delete(cv.services, k)
-	}
-	if e != EventDelete {
-		// Treat as upsert
-		cv.serviceLabels.addLabel(k, labelServiceName, s.Hostname)
-		if s.ExternalName != "" {
-			cv.serviceLabels.addLabel(k, labelServiceExternalName, s.ExternalName)
-		}
-		if s.Address != "" {
-			cv.serviceLabels.addLabel(k, labelServiceVIP, getNormalizedIP(s.Address))
-		}
-		cv.services[k] = s
-	}
-}
-
-// reconcileServiceInstance is expected to be called only from inside reconcileServiceInstances(). The caller is expected
-// to lock the resource view before calling this method()
-func (cv *ControllerView) reconcileServiceInstance(k string, i *ServiceInstance, e Event) {
-	old, found := cv.serviceInstances[k]
-	if found {
-		cv.instanceLabels.deleteLabel(k, labelServiceName, old.Service.Hostname)
-		cv.instanceLabels.deleteLabel(k, labelInstanceIP, getNormalizedIP(old.Endpoint.Address))
-		cv.instanceLabels.deleteLabel(k, labelInstancePort, getNormalizedPort(old.Endpoint.Port))
-		if old.Endpoint.ServicePort.Name != "" {
-			cv.instanceLabels.deleteLabel(k, labelInstanceNamedPort, old.Endpoint.ServicePort.Name)
-		}
-		for label, value := range old.Labels {
-			cv.instanceLabels.deleteLabel(k, label, value)
-		}
-		delete(cv.serviceInstances, k)
-	}
-	if e != EventDelete {
-		// Treat as upsert
-		cv.instanceLabels.addLabel(k, labelServiceName, i.Service.Hostname)
-		cv.instanceLabels.addLabel(k, labelInstanceIP, getNormalizedIP(i.Endpoint.Address))
-		cv.instanceLabels.addLabel(k, labelInstancePort, getNormalizedPort(i.Endpoint.Port))
-		if i.Endpoint.ServicePort != nil && i.Endpoint.ServicePort.Name != "" {
-			cv.instanceLabels.addLabel(k, labelInstanceNamedPort, i.Endpoint.ServicePort.Name)
-		}
-		for label, value := range i.Labels {
-			cv.instanceLabels.addLabel(k, label, value)
-		}
-		cv.serviceInstances[k] = i
-	}
-}
-
-// Given a set of labels, gets a set of keys that match the values
-// of all labels
-func (vl viewLabels) getKeysMatching(labels Labels) viewKeySet {
-	type matchingSet struct {
-		labelName  string
-		labelValue string
-		keySet     viewKeySet
-	}
+// getKeysMatching returns a set of EndpointKeys that match the values
+// of all labels with a reasonably predictable performance. It does 
+// this by fetching the Endpoint key sets for for each matching label
+// and value then uses the shortest key set for checking whether the
+// keys are present in the other key sets.
+func (lv labelValues) getKeysMatching(labels Labels) endpointKeySet {
 	countLabels := len(labels)
 	if countLabels == 0 {
 		// There must be at least one label else return nothing
-		return viewKeySet{}
+		return endpointKeySet{}
 	}
 	// Note: 0th index has the smallest keySet
-	matchingSets := make([]matchingSet, countLabels)
+	matchingSets := make([]endpointKeySet, countLabels)
 	smallestSetLen := math.MaxInt32
 	setIdx := 0
 	for l, v := range labels {
-		valueKeysetMap := vl[l]
-		if len(valueKeysetMap) == 0 {
+		valKeySetMap, found := lv[l]
+		if !found {
 			// Nothing matched at least one label name
-			return viewKeySet{}
+			return endpointKeySet{}
 		}
-		valKeySet := valueKeysetMap[v]
-		lenKeySet := len(valKeySet)
-		if lenKeySet == 0 {
+		epKeySet, found := valKeySetMap[v]
+		if !found {
 			// There were no service keys for this label value
-			return viewKeySet{}
+			return endpointKeySet{}
 		}
-		matchingSets[setIdx].keySet = valKeySet
+		matchingSets[setIdx] = epKeySet
+		lenKeySet := len(epKeySet)
 		if lenKeySet < smallestSetLen {
 			smallestSetLen = lenKeySet
 			if setIdx > 0 {
@@ -480,12 +335,12 @@ func (vl viewLabels) getKeysMatching(labels Labels) viewKeySet {
 		setIdx++
 	}
 	if countLabels == 1 {
-		return matchingSets[0].keySet
+		return matchingSets[0]
 	}
-	out := newViewKeySet(matchingSets[0].keySet)
+	out := newEndpointKeySet(matchingSets[0])
 	for k := range out {
 		for setIdx := 1; setIdx < countLabels; setIdx++ {
-			_, found := matchingSets[setIdx].keySet[k]
+			_, found := matchingSets[setIdx][k]
 			if !found {
 				delete(out, k)
 				break
@@ -495,43 +350,28 @@ func (vl viewLabels) getKeysMatching(labels Labels) viewKeySet {
 	return out
 }
 
-// Given a label name, fetches a set of keys that have the label,
-// irrespective of what the label value may be.
-func (vl viewLabels) getAllKeysMatchingLabel(l string) viewKeySet {
-	valueKeysetMap := vl[l]
-	if len(valueKeysetMap) == 0 {
-		// Nothing matched at least one label name
-		return viewKeySet{}
-	}
-	out := viewKeySet{}
-	for _, keySet := range valueKeysetMap {
-		out.appendAll(keySet)
-	}
-	return out
-}
-
 // addLabel creates the reverse lookup by label name and label value for the key k.
-func (vl viewLabels) addLabel(k, labelName, labelValue string) {
-	valueKeysetMap, labelNameFound := vl[labelName]
+func (lv labelValues) addLabel(k, labelName, labelValue string) {
+	valKeySet, labelNameFound := lv[labelName]
 	if !labelNameFound {
-		valueKeysetMap = make(viewValues)
-		vl[labelName] = valueKeysetMap
+		valKeySet = make(valueKeySet)
+		lv[labelName] = valKeySet
 	}
-	keySet, labelValueFound := valueKeysetMap[labelValue]
+	keySet, labelValueFound := valKeySet[labelValue]
 	if !labelValueFound {
-		keySet = make(viewKeySet)
-		valueKeysetMap[labelValue] = keySet
+		keySet = make(endpointKeySet)
+		valKeySet[labelValue] = keySet
 	}
 	keySet[k] = true
 }
 
 // deleteLabel removes the key k from the reverse lookup of the label name and value
-func (vl viewLabels) deleteLabel(k string, labelName, labelValue string) {
-	valueKeysetMap, labelNameFound := vl[labelName]
+func (lv labelValues) deleteLabel(k string, labelName, labelValue string) {
+	valKeySet, labelNameFound := lv[labelName]
 	if !labelNameFound {
 		return
 	}
-	keySet, labelValueFound := valueKeysetMap[labelValue]
+	keySet, labelValueFound := valKeySet[labelValue]
 	if !labelValueFound {
 		return
 	}
@@ -539,16 +379,16 @@ func (vl viewLabels) deleteLabel(k string, labelName, labelValue string) {
 	if len(keySet) > 0 {
 		return
 	}
-	delete(valueKeysetMap, labelValue)
-	if len(valueKeysetMap) > 0 {
+	delete(valKeySet, labelValue)
+	if len(valKeySet) > 0 {
 		return
 	}
-	delete(vl, labelName)
+	delete(lv, labelName)
 }
 
-// newKeySet creates a copy of fromKs that can be modified without altering fromKs
-func newViewKeySet(fromKs viewKeySet) viewKeySet {
-	out := make(viewKeySet, len(fromKs))
+// newEndpointKeySet creates a copy of fromKs that can be modified without altering fromKs
+func newEndpointKeySet(fromKs endpointKeySet) endpointKeySet {
+	out := make(endpointKeySet, len(fromKs))
 	for k, v := range fromKs {
 		if v {
 			out[k] = v
@@ -557,24 +397,10 @@ func newViewKeySet(fromKs viewKeySet) viewKeySet {
 	return out
 }
 
-// appendAll appends all keys from fromKs to ks
-func (ks viewKeySet) appendAll(fromKs viewKeySet) {
-	for k, v := range fromKs {
-		if v {
-			ks[k] = v
-		}
-	}
-}
-
-// getNormalizedIP returns a normalized IPv6 addresses encoded in hex
-// given an IPv4 or IPv6 address
-func getNormalizedIP(address string) string {
-	ip := net.ParseIP(address)
-	return hex.EncodeToString(ip)
-}
-
-// getNormalizedPort returns a normalized 16 bit port number encoded in hex
-func getNormalizedPort(port int) string {
-	pb := []byte{byte((port >> 8) & 0xFF), byte(port & 0xFF)}
-	return hex.EncodeToString(pb)
+// getNormalizedIP returns a normalized IPv6 address. For example
+// given an IPv4-mapped=IPv6 address, it returns the normal IPv4
+// address of the kind "10.1.0.2".
+func getNormalizedIP(inp string) string {
+    ip := net.ParseIP(inp)
+    return ip.String()
 }
