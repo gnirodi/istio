@@ -77,14 +77,14 @@ spec:
         - containerPort: 42422
         args:
           - --configStoreURL=fs:///etc/opt/mixer/configroot
-          - --configStore2URL=k8s://
+          - --configStoreURL=k8s://
           - --configDefaultNamespace={ISTIO_NAMESPACE}
           - --zipkinURL=http://zipkin:9411/api/v1/spans
           - --logtostderr
           - -v
           - "2"
       - name: istio-proxy
-        image: {PROXY_HUB}/proxy_debug:{PROXY_TAG}
+        image: {PROXY_HUB}/{PROXY_IMAGE}:{PROXY_TAG}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 15004
