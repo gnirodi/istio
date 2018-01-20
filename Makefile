@@ -164,6 +164,10 @@ build: setup go-build
 # gobuild script uses custom linker flag to set the variables.
 # Params: OUT VERSION_PKG SRC
 
+.PHONY: istio-envoy-api
+istio-envoy-api: vendor
+
+
 .PHONY: pilot
 pilot: vendor
 	bin/gobuild.sh ${GOPATH}/bin/pilot-discovery istio.io/istio/pilot/tools/version ./pilot/cmd/pilot-discovery
@@ -196,7 +200,7 @@ node-agent: vendor
 istio-ca: vendor
 	bin/gobuild.sh ${GOPATH}/bin/istio_ca istio.io/istio/security/cmd/istio_ca/version ./security/cmd/istio_ca
 
-go-build: pilot istioctl pilot-agent sidecar-initializer mixs mixc node-agent istio-ca
+go-build: pilot istioctl pilot-agent sidecar-initializer mixs mixc node-agent istio-ca istio-envoy-api
 
 #-----------------------------------------------------------------------------
 # Target: go test
