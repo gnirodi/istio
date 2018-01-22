@@ -79,12 +79,12 @@ checkvars:
 	@if test -z "$(TAG)"; then echo "TAG missing"; exit 1; fi
 	@if test -z "$(HUB)"; then echo "HUB missing"; exit 1; fi
 
-setup: pilot/platform/kube/config
+setup: pilot/platform/kube/config istio-envoy-api
 
 #-----------------------------------------------------------------------------
 # Target: depend
 #-----------------------------------------------------------------------------
-.PHONY: depend 
+.PHONY: depend
 .PHONY: depend.status depend.ensure depend.graph
 
 depend: depend.ensure
@@ -101,7 +101,7 @@ depend.status: Gopkg.lock | ${GOPATH}/bin/dep ; $(info $(H) reporting dependenci
 # @todo only run if there are changes (e.g., create a checksum file?) 
 # Update the vendor dir, pulling latest compatible dependencies from the
 # defined branches.
-depend.ensure: | ${GOPATH}/bin/dep ; $(info $(H) ensuring dependencies are up to date...)
+depend.ensure: istio-envoy-api | ${GOPATH}/bin/dep ; $(info $(H) ensuring dependencies are up to date...)
 	$(Q) ${GOPATH}/bin/dep ensure
 
 depend.graph: Gopkg.lock | ${GOPATH}/bin/dep ; $(info $(H) visualizing dependency graph...)
@@ -166,7 +166,7 @@ build: setup go-build
 
 .PHONY: istio-envoy-api
 istio-envoy-api: vendor
-
+	bin/build-envoy-api.sh
 
 .PHONY: pilot
 pilot: vendor
@@ -265,17 +265,21 @@ cov: pilot-cov mixer-cov security-cov broker-cov
 #-----------------------------------------------------------------------------
 # Target: precommit
 #-----------------------------------------------------------------------------
-.PHONY: clean
+
+.PHONY: clean-istio-envoy-api
+clean-istio-envoy-api:
+	bin/build-envoy-api.sh --clean
+
 .PHONY: clean.go
-
-clean: clean.go
-
 clean.go: ; $(info $(H) cleaning...)
 	$(eval GO_CLEAN_FLAGS := -i -r)
 	$(Q) $(GO) clean $(GO_CLEAN_FLAGS)
 	$(MAKE) clean -C mixer
 	$(MAKE) clean -C pilot
 	$(MAKE) clean -C security
+
+.PHONY: clean
+clean: clean.go clean-istio-envoy-api
 
 test: setup go-test
 
