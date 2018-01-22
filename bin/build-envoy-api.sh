@@ -17,11 +17,17 @@
 # This script fetches envoy API protos at a locked version and generates go grpc files
 
 VENDOR_PATH="${GOPATH}/src/istio.io/istio/vendor"
+OLD_IFS=$IFS
+
+get_toml_meta() {
+	local __version_regex="s/.*${1}\\s*=\\s*\"\\(.*\\)\".*/\\1/g"
+	TOML_META=`cat Gopkg.toml | grep ${1} | sed -e ${__version_regex}`
+}
 
 download-versioned-src() {
 	if [ -z "${1}" ]; then
-	    echo "Error: No repo specified!"
-		return -1
+	    echo "Error: No repo specified for download-versioned-src!"
+		exit -1
 	fi
     REPO="${1}"
 	API_PATH="${2}"
@@ -31,7 +37,7 @@ download-versioned-src() {
 	if [ ! -z "${5}" ]; then
 		OPT_EXCLUSIONS="-x ${5}"
 	fi
-	echo "Downloading proto files for ${REPO}/${API_PATH} at version: ${API_VERSION}"
+	echo "    ${REPO}/${API_PATH} at version: ${API_VERSION}"
 	VENDOR_REPO_PATH="${VENDOR_PATH}/${REPO}"
 	mkdir -p ${VENDOR_REPO_PATH}
 	rm -rf ${VENDOR_REPO_PATH}/*
@@ -41,26 +47,46 @@ download-versioned-src() {
 	rm ${VENDOR_REPO_PATH}/${API_VERSION}.zip
 }
 
-echo ""
-echo "Fetching Envoy API proto sources"
+GO_PACKAGE_DIRS=()
 
-# Fetch Envoy API
-VERSION_ENVOY_API="7d740da8fc19dac2132403b7456bdca477a1b70a"
-download-versioned-src github.com/envoyproxy data-plane-api ${VERSION_ENVOY_API} "*.proto" "*/metrics_service.proto"
+extract_packages() {
+    GO_PACKAGE_PREFIX="vendor/${1}/${2}"
+	IFS=' ' read -ra PROTO_PATHS <<< "${3}"
+	for PROTO_PATH in "${PROTO_PATHS[@]}"
+	do
+	  # sed regex: 's/\*\(\/\(.*\/\)?\).*/\1/g'
+	  local __version_regex="s/\\*\\(\\/\\(.*\\/\\)\?\\).*/\\1/g"
+	  PROTO_PATH_BASE=`echo "${PROTO_PATH}" | sed -e ${__version_regex}`
+	  PROTO_PATH_SUBDIRS=`find ${GO_PACKAGE_PREFIX}${PROTO_PATH_BASE} -type d`
+	  for PROTO_PATH_SUBDIR in "${PROTO_PATH_SUBDIRS[@]}"
+	  do
+	  	GO_PACKAGE_DIRS+=(${PROTO_PATH_SUBDIR})
+	  done
+	done
+}
 
-# Fetch Googleapis
-VERSION_GOOGLE_APIS="c8c975543a134177cc41b64cbbf10b88fe66aa1d"
-download-versioned-src github.com/googleapis googleapis ${VERSION_GOOGLE_APIS} "*/google/rpc/*.proto */google/api/*.proto"
+echo -e "\nFetching Envoy API proto sources"
 
-# Fetch Lyft protogen validate
-VERSION_LYFT_APIS="8e6aaf55f4954f1ef9d3ee2e8f5a50e79cc04f8f"
-download-versioned-src github.com/lyft protoc-gen-validate ${VERSION_LYFT_APIS} "*/validate/validate.proto"
-
-echo "Generating Envoy API gogo files"
-OUTDIR="vendor/github.com/envoyproxy/data-plane-api"
+get_toml_meta "GOGO_PROTO_APIS"
+IFS=' ' read -ra APIS <<< "${TOML_META}"
+for API in "${APIS[@]}"
+do
+    get_toml_meta "${API}_REPO"
+    REPO="${TOML_META}"
+    get_toml_meta "${API}_PROJECT"
+    PROJECT="${TOML_META}"
+    get_toml_meta "${API}_PROTOS"
+    PROTOS="${TOML_META}"
+    get_toml_meta "${API}_EXCLUSIONS"
+    EXCLUSIONS="${TOML_META}"
+    get_toml_meta "${API}_REVISION"
+    REVISION="${TOML_META}"
+    download-versioned-src "${REPO}" "${PROJECT}" "${REVISION}" "${PROTOS}" "${EXCLUSIONS}" 
+    extract_packages "${REPO}" "${PROJECT}" "${PROTOS}" 
+done
 
 imports=(
- "${OUTDIR}"
+ "vendor/github.com/envoyproxy/data-plane-api"
  "vendor/github.com/gogo/protobuf"
  "vendor/github.com/gogo/protobuf/protobuf"
  "vendor/github.com/googleapis/googleapis"
@@ -74,10 +100,16 @@ done
 mappings=(
   "gogoproto/gogo.proto=github.com/gogo/protobuf/gogoproto"
   "google/protobuf/any.proto=github.com/gogo/protobuf/types"
+  "google/protobuf/api.proto=github.com/gogo/protobuf/types"
+  "google/protobuf/descriptor.proto=github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
   "google/protobuf/duration.proto=github.com/gogo/protobuf/types"
-  "google/rpc/status.proto=istio.io/gogo-genproto/googleapis/google/rpc"
+  "google/protobuf/struct.proto=github.com/gogo/protobuf/types"
+  "google/protobuf/timestamp.proto=github.com/gogo/protobuf/types"
+  "google/protobuf/type.proto=github.com/gogo/protobuf/types"
+  "google/protobuf/wrappers.proto=github.com/gogo/protobuf/types"
   "google/rpc/code.proto=istio.io/gogo-genproto/googleapis/google/rpc"
   "google/rpc/error_details.proto=istio.io/gogo-genproto/googleapis/google/rpc"
+  "google/rpc/status.proto=istio.io/gogo-genproto/googleapis/google/rpc"
   "validate/validate.proto=github.com/lyft/protoc-gen-validate/validate"
 )
 MAPPINGS=""
@@ -99,31 +131,38 @@ if [ ! -f ${GOGOFAST_PROTOC_GEN} ]; then
   GOBIN=${GOPATH}/bin go install vendor/github.com/gogo/protobuf/protoc-gen-gogofast/main.go
   mv -u ${GOPATH}/bin/main ${GOGOFAST_PROTOC_GEN}
 fi
+
 protoc="${GOGO_PROTOC} -version=3.5.0"
-PLUGIN="--plugin=${GOGOFAST_PROTOC_GEN} --gogofast-${GOGO_VERSION}_out=plugins=grpc,$MAPPINGS:"
-PLUGIN+="${OUTDIR}"
+PLUGIN="--plugin=${GOGOFAST_PROTOC_GEN} --gogofast-${GOGO_VERSION}_out=plugins=grpc,$MAPPINGS"
+
+update_go_package() {
+  local __pkg_regex="s/option\\s*go_package\\s*=\\s*\"\\(.*\\)\".*/\\1/g"
+  local __go_pkg=`cat ${1} | grep "option go_package" | sed -e ${__pkg_regex}`
+  local __re=".*/.*"
+  if [[ ! "${__go_pkg}" =~ ${__re} ]]
+  then
+    local __go_pkg_root=`echo "${1}" | cut -d "/" -f1,2,3,4`
+    OUTDIR=":${__go_pkg_root}"
+  fi
+}
 
 runprotoc() {
-	err=`${protoc} ${IMPORTS} ${PLUGIN} ${1}`
+    OUTDIR=":vendor"
+    update_go_package "${1}"
+	# echo -e "Running: ${protoc} ${IMPORTS} ${PLUGIN} $@\n"
+	err=`${protoc} ${IMPORTS} ${PLUGIN}${OUTDIR} $@`
 	if [ ! -z "$err" ]; then 
-	  echo "Error in building Envoy API gogo files "
+	  echo "Error in building Envoy API gogo files:"
 	  echo "${err}"
+	  exit -1
 	fi
 }
 
-API_PROTOS=`find ${OUTDIR}/api -maxdepth 1 -name "*.proto"`
-API_AUTH_PROTOS=`find ${OUTDIR}/api/auth -maxdepth 1 -name "*.proto"`
-API_FILTER_PROTOS=`find ${OUTDIR}/api/filter -maxdepth 1 -name "*.proto"`
-API_FILTER_ACCESSLOG_PROTOS=`find ${OUTDIR}/api/filter/accesslog -maxdepth 1 -name "*.proto"`
-API_FILTER_HTTP_PROTOS=`find ${OUTDIR}/api/filter/http -maxdepth 1 -name "*.proto"`
-API_FILTER_HTTP_NETWORK_PROTOS=`find ${OUTDIR}/api/filter/network -maxdepth 1 -name "*.proto"`
-
-runprotoc "${API_PROTOS}"
-runprotoc "${API_AUTH_PROTOS}"
-runprotoc "${API_FILTER_PROTOS}"
-runprotoc "${API_FILTER_ACCESSLOG_PROTOS}"
-runprotoc "${API_FILTER_HTTP_PROTOS}"
-runprotoc "${API_FILTER_HTTP_NETWORK_PROTOS}"
-
-echo "Done building Envoy API proto gogo files!"
-echo ""
+echo -e "\nGenerating Envoy API gogo files"
+for PACKAGE_DIR in "${GO_PACKAGE_DIRS[@]}"
+do
+	echo "    proto-source: ${PACKAGE_DIR}"
+	GOGO_PROTOS=`find ${PACKAGE_DIR} -maxdepth 1 -name "*.proto"`
+	runprotoc ${GOGO_PROTOS}
+done
+echo -e "\nDone building Envoy API proto gogo files!\n"
