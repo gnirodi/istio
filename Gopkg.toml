@@ -42,6 +42,10 @@ required = [
   name = "google.golang.org/grpc"
   version = "^1.8.2" # match istio/api
 
+[[constraint]]
+  name = "github.com/envoyproxy/go-control-plane"
+  revision = "cd217031c55a80342a864f9aff3b7a7f22205891"
+
 
 # When necessary, override transitive contraints that might be pinned
 # to older versions (e.g. ingress-nginx pinned to 1.8).
