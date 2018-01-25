@@ -23,13 +23,18 @@
 //
 //   type MyPlatformController struct {
 //     Mesh
-//     }
+//   }
 //   ...
 //   pc := MyPlatformController{model.NewMesh()}
 //   ...
 //   var allEndpoints []*model.ServiceInstances
-//   allEndpoints = buildYourPlatformServiceEndpointList()
-//   pc.Reconcile(allEndpoints)
+//   nativeEndpoints = buildYourPlatformServiceEndpointList()
+//   meshEndpoints := make([]*Endpoint, len(nativeEndpoints))
+//	 for idx, nativeEp := range nativeEndpoints {
+//     // Create mesh endpoint from relevant values of nativeEp
+//	   meshEndpoints[idx] = NewEndpoint(......)
+//   }
+//   pc.Reconcile(meshEndpoints)
 //
 package model
 
@@ -40,6 +45,7 @@ import (
 	"net"
 	"reflect"
 	"regexp"
+	"strconv"
 	"sync"
 
 	xdsapi "github.com/envoyproxy/go-control-plane/api"
@@ -65,7 +71,7 @@ const (
 	// from the Controller. Example: kubernetes://my-svc-234443-5sffe.my-namespace
 	// No two instances running anywhere in the mesh can have the same value for
 	// UID.
-	UID IstioDestinationAttribute = "destination.uid"
+	UID destinationAttribute = "destination.uid"
 
 	// SERVICE represents the fully qualified __CANONOCAL__ name of the Istio
 	// service, ex: "my-svc.my-namespace.svc.cluster.local".  Mesh uses
@@ -74,53 +80,56 @@ const (
 	// meaning services having this name are semantically understood to be the same
 	// modulo version and other labels, irrespective of the platform under which
 	// they are run, the clusters or availability zones they run in.
-	SERVICE IstioDestinationAttribute = "destination.service"
+	SERVICE destinationAttribute = "destination.service"
 
 	// NAME represents the short part of the service name, ex: "my-svc".
-	NAME IstioDestinationAttribute = "destination.name"
+	NAME destinationAttribute = "destination.name"
 
 	// NAMESPACE represents the namespace part of the destination service,
 	// example: "my-namespace".
-	NAMESPACE IstioDestinationAttribute = "destination.namespace"
+	NAMESPACE destinationAttribute = "destination.namespace"
 
 	// IP represents the IP address of the server instance, example 10.0.0.104.
 	// This IP is expected to be reachable from __THIS__ pilot. No distinction
 	// is being made for directly reachable service instances versus those
 	// behind a VIP. Istio's health discovery service will ensure that this
 	// endpoint's capacity is correctly reported accordingly.
-	IP IstioDestinationAttribute = "destination.ip"
+	IP destinationAttribute = "destination.ip"
 
 	// PORT represents the recipient port on the server IP address, Example: 443
-	PORT IstioDestinationAttribute = "destination.port"
+	PORT destinationAttribute = "destination.port"
 
 	// DOMAIN represents the domain portion of the service name, excluding
 	// the name and namespace, example: svc.cluster.local
-	DOMAIN IstioDestinationAttribute = "destination.domain"
+	DOMAIN destinationAttribute = "destination.domain"
 
 	// USER represents the __CANONICAL__ Mesh user running the destination
 	// application, example: service-account-foo. The user's identity is
 	// assumed to be trusted within the entire mesh, irrespective of which
 	// platform, cluster or availability zone this instance runs in.
-	USER IstioDestinationAttribute = "destination.domain"
+	USER destinationAttribute = "destination.user"
 )
 
 var (
-	istioDestAttrSet = map[string]bool{
-		UID.String():       true,
-		SERVICE.String():   true,
-		NAME.String():      true,
-		NAMESPACE.String(): true,
-		IP.String():        true,
-		PORT.String():      true,
-		DOMAIN.String():    true,
-		USER.String():      true,
+	destinationAttrSet = map[string]bool{
+		UID.stringValue():       true,
+		SERVICE.stringValue():   true,
+		NAME.stringValue():      true,
+		NAMESPACE.stringValue(): true,
+		IP.stringValue():        true,
+		PORT.stringValue():      true,
+		DOMAIN.stringValue():    true,
+		USER.stringValue():      true,
 	}
 
-	svcRegexp = regexp.MustCompile(
+	canonicalIstioDomain = "svc.cluster.local"
+	svcRegexp            = regexp.MustCompile(
 		"([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.svc\\.cluster\\.local")
+	domainRegexp = regexp.MustCompile(
+		"([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])*")
 )
 
-type IstioDestinationAttribute string
+type destinationAttribute string
 
 // Mesh is a platform independent abstraction used by Controllers
 // for maintaining a list of service endpoints used by this Pilot.
@@ -210,6 +219,9 @@ func NewMesh() *Mesh {
 	return &Mesh{
 		allEndpoints:      map[string]*Endpoint{},
 		subsetDefinitions: map[string]*route.Subset{},
+		subsetEndpoints:   subsetEndpoints{},
+		reverseAttrMap:    attributeValues{},
+		reverseEpSubsets:  endpointSubsets{},
 		mu:                sync.RWMutex{},
 	}
 }
@@ -225,14 +237,14 @@ func (m *Mesh) Reconcile(endpoints []*Endpoint) error {
 	// what's not currently in m.
 	epsToAdd := make(map[string]*Endpoint, len(endpoints))
 	for _, ep := range endpoints {
-		epUID, found := ep.GetLabelValue(UID.String())
+		epUID, found := ep.getLabelValue(UID.stringValue())
 		if !found {
-			errs = multierror.Append(errs, errors.New(fmt.Sprintf("mandatory attribute '%s' missing in endpoint metadata '%v'", UID.String(), ep)))
+			errs = multierror.Append(errs, errors.New(fmt.Sprintf("mandatory attribute '%s' missing in endpoint metadata '%v'", UID.stringValue(), ep)))
 			continue
 		}
-		_, found = ep.GetLabelValue(SERVICE.String())
+		_, found = ep.getLabelValue(SERVICE.stringValue())
 		if !found {
-			errs = multierror.Append(errs, errors.New(fmt.Sprintf("mandatory attribute '%s' missing in endpoint metadata '%v'", SERVICE.String(), ep)))
+			errs = multierror.Append(errs, errors.New(fmt.Sprintf("mandatory attribute '%s' missing in endpoint metadata '%v'", SERVICE.stringValue(), ep)))
 			continue
 		}
 		epsToAdd[epUID] = ep
@@ -280,7 +292,7 @@ func (m *Mesh) Reconcile(endpoints []*Endpoint) error {
 		// of the service and empty labels. In any case, populating these default
 		// subsets may be OK if pilot should not need to wait for configs supplied by
 		// galley, given that controllers may already provide Mesh with this info.
-		svcName, _ := addEp.GetLabelValue(SERVICE.String())
+		svcName, _ := addEp.getLabelValue(SERVICE.stringValue())
 		newSubsetMappings.addEndpointUID(svcName, uid)
 	}
 	// Verify if existing subset definitions apply for the newly added labels
@@ -331,7 +343,7 @@ func (m *Mesh) SubsetNames() []string {
 }
 
 // UpdateSubsets implements functionality required for pilot configuration (via Galley).
-// It updates the Mesh for the supplied events, adding, updating and deleting Subsets
+// It updates the Mesh for supplied events, adding, updating and deleting Subsets
 // from this mesh as determined by the corresponding Event. The list of subsetEvents
 // can be a partial one.
 func (m *Mesh) UpdateSubsets(subsetEvents []SubsetEvent) {
@@ -360,10 +372,36 @@ func (m *Mesh) UpdateSubsets(subsetEvents []SubsetEvent) {
 
 // NewEndpoint is a boiler plate function intended for platform Controllers to create a new Endpoint. This method
 // ensures all the necessary data required for creating subsets are correctly setup.
-func NewEndpoint(endpointUID, service, address string, port uint32, protocol Protocol, labels Labels) (*Endpoint, error) {
+func NewEndpoint(endpointUID, service string, aliases []string, address string, port uint32, protocol Protocol, labels Labels, user string) (*Endpoint, error) {
+	var errs error
 	ipAddr := net.ParseIP(address)
 	if ipAddr == nil {
-		return nil, errors.New(fmt.Sprintf("invalid address '%s'", address))
+		errs = multierror.Append(errs, errors.New(fmt.Sprintf("invalid IP address '%s'", address)))
+	}
+	svcParts := svcRegexp.FindStringSubmatch(service)
+	if svcParts == nil || len(svcParts) != 2 {
+		errs = multierror.Append(
+			errors.New(fmt.Sprintf(
+				"invalid service name format, expecting form <name>.<namespace>.svc.cluster.local found'%s'",
+				service)))
+	}
+	for _, alias := range aliases {
+		if !domainRegexp.MatchString(alias) {
+			errs = multierror.Append(errors.New(
+				fmt.Sprintf("invalid service alias format for service '%s', expecting format '%s' found'%s'",
+					service, domainRegexp.String(), alias)))
+		}
+	}
+	destLabels := make(Labels, len(labels)+len(destinationAttrSet))
+	for labelName, labelValue := range labels {
+		if isDestinationAttribute(labelName) {
+			errs = multierror.Append(errors.New(
+				fmt.Sprintf("prohibited use of Istio destination label '%s' for endpoint label", labelName)))
+		}
+		destLabels[labelName] = labelValue
+	}
+	if errs != nil {
+		return nil, multierror.Prefix(errs, "Mesh endpoint creation errors")
 	}
 	socketProtocol := xdsapi.SocketAddress_TCP
 	switch protocol {
@@ -389,18 +427,28 @@ func NewEndpoint(endpointUID, service, address string, port uint32, protocol Pro
 		},
 	}
 
-	// Populate destination labels.
-	ep.internalSetLabels(
-		Labels{
-			UID.String():     endpointUID,
-			SERVICE.String(): service,
-		}, false)
+	destLabels[UID.stringValue()] = endpointUID
+	destLabels[SERVICE.stringValue()] = service
+	destLabels[NAMESPACE.stringValue()] = svcParts[1]
+	destLabels[DOMAIN.stringValue()] = canonicalIstioDomain
+	destLabels[IP.stringValue()] = ipAddr.String()
+	destLabels[PORT.stringValue()] = strconv.Itoa((int)(port))
+	destLabels[USER.stringValue()] = user
+
+	// Populate destination labels pertaining to alias
+	serviceNames := make([]string, len(aliases)+1)
+	copy(serviceNames, aliases)
+	serviceNames[len(serviceNames)-1] = svcParts[0]
+	ep.setLabelValues(NAME.stringValue(), serviceNames)
+
+	// Populate Istio destination labels.
+	ep.setLabels(destLabels)
 
 	return &ep, nil
 }
 
-// Labels gets Endpoint labels relevant to subset mapping only.
-func (ep *Endpoint) Labels() Labels {
+// getLabels gets Endpoint labels relevant to subset mapping only.
+func (ep *Endpoint) getLabels() Labels {
 	out := Labels{}
 	metadata := ep.Metadata
 	if metadata == nil {
@@ -424,18 +472,8 @@ func (ep *Endpoint) Labels() Labels {
 	return out
 }
 
-// SetLabels sets the Endpoint labels. Label names can be any label that
-// subsets would typically need for effecting routing rules. Labels would
-// typically be obtained from the application running the service. For
-// example, the Kubernetes Controller would dervive labels from pods.
-// However these should __NOT__ contain any label names from
-// IstioDestinationAttributes. Doing so would result in errors.
-func (ep *Endpoint) SetLabels(labels Labels) error {
-	return ep.internalSetLabels(labels, true)
-}
-
-// GetLabelValue gets a label value matching attrName.
-func (ep *Endpoint) GetLabelValue(attrName string) (string, bool) {
+// getLabelValue gets a label value matching attrName.
+func (ep *Endpoint) getLabelValue(attrName string) (string, bool) {
 	metadata := ep.Metadata
 	if metadata == nil {
 		return "", false
@@ -459,21 +497,42 @@ func (ep *Endpoint) GetLabelValue(attrName string) (string, bool) {
 	return labelValue, true
 }
 
-// GetLabelValue gets a label value matching attrName.
-func (ep *Endpoint) SetLabelValue(attrName, attrValue string) error {
-	return ep.SetLabels(Labels{attrName: attrValue})
+// setLabelValues allows multiple values to be set for a given attribute.
+// Currently used internally for service name and aliases only.
+func (ep *Endpoint) setLabelValues(attrName string, attrValues []string) {
+	istioMeta := ep.getIstioMetadata()
+	listValues := make([]*types.Value, len(attrValues))
+	for idx, attrValue := range attrValues {
+		listValues[idx] = &types.Value{&types.Value_StringValue{attrValue}}
+	}
+	istioMeta[attrName] = &types.Value{&types.Value_ListValue{&types.ListValue{listValues}}}
 }
 
-func (attr IstioDestinationAttribute) String() string {
+// String returns the name of destination attribute.
+func (attr destinationAttribute) stringValue() string {
 	return (string)(attr)
 }
 
-func IsIstioDestinationAttribute(attr string) bool {
-	_, found := istioDestAttrSet[attr]
+// isDestinationAttribute returns true if the supplied attr is
+// one of Istio's destination labels.
+func isDestinationAttribute(attr string) bool {
+	_, found := destinationAttrSet[attr]
 	return found
 }
 
-func (ep *Endpoint) internalSetLabels(labels Labels, assertNotDestination bool) error {
+// internalSetLabels is an internally by Mesh to set labels, asserting as
+// required whether the label set is allowed to contain destination labels
+// or not.
+func (ep *Endpoint) setLabels(labels Labels) {
+	istioMeta := ep.getIstioMetadata()
+	for k, v := range labels {
+		istioMeta[k] = &types.Value{
+			&types.Value_StringValue{v},
+		}
+	}
+}
+
+func (ep *Endpoint) getIstioMetadata() map[string]*types.Value {
 	metadata := ep.Metadata
 	if metadata == nil {
 		metadata = &xdsapi.Metadata{}
@@ -485,22 +544,7 @@ func (ep *Endpoint) internalSetLabels(labels Labels, assertNotDestination bool) 
 		configLabels = &types.Struct{}
 		filterMap[istioConfigFilter] = configLabels
 	}
-	var errs error
-	for k, v := range labels {
-		if assertNotDestination && IsIstioDestinationAttribute(k) {
-			errs = multierror.Append(errs,
-				errors.New(fmt.Sprintf(
-					"label name '%s' is an Istio destination label and is illegal to use for SetLabel()", k)))
-		}
-		configLabels.GetFields()[k] = &types.Value{
-			&types.Value_StringValue{v},
-		}
-	}
-	if errs != nil {
-		err := multierror.Prefix(errs, "Endpoint '%v'")
-		log.Error(err.Error())
-	}
-	return nil
+	return configLabels.Fields
 }
 
 // deleteEndpoint removes all internal references to the endpoint, i.e  from
@@ -531,7 +575,7 @@ func (m *Mesh) deleteEndpoint(uid string, ep *Endpoint) {
 // reconcile(). The caller is expected to lock the mesh before calling
 // this method().
 func (av attributeValues) deleteEndpoint(uid string, ep *Endpoint) {
-	for label, value := range ep.Labels() {
+	for label, value := range ep.getLabels() {
 		av.deleteLabel(uid, label, value)
 	}
 }
@@ -539,7 +583,7 @@ func (av attributeValues) deleteEndpoint(uid string, ep *Endpoint) {
 // addServiceEndpoint adds this uid to the keysets of for all name value
 // pairs of attributes.
 func (av attributeValues) addServiceEndpoint(uid string, ep *Endpoint) {
-	for label, value := range ep.Labels() {
+	for label, value := range ep.getLabels() {
 		av.addLabel(uid, label, value)
 	}
 }

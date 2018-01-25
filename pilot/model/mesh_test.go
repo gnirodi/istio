@@ -18,7 +18,14 @@ import (
 	"testing"
 )
 
-func TestNewMesh(t *testing.T) {
+const (
+	testService1 = "test-service-1.default.svc.cluster.local"
+	testService2 = "test-service-2.default.svc.cluster.local"
+	testSubset1  = "test-subset-1"
+	testSubset2  = "test"
+)
+
+func TestMeshNewMesh(t *testing.T) {
 	tm := NewMesh()
 	if tm == nil {
 		t.Error("expecting valid Mesh, found nil")
@@ -26,17 +33,45 @@ func TestNewMesh(t *testing.T) {
 }
 
 func TestMeshEndpoints(t *testing.T) {
+	tm := NewMesh()
+	expected := []*Endpoint{}
+	t.Run("EmptyMesh", func(t *testing.T) {
+		actual := tm.MeshEndpoints(subsetNames)
+	})
+}
+
+func TestMeshSubsetNames(t *testing.T) {
 
 }
 
-func TestSubsetNames(t *testing.T) {
+func TestMeshReconcile(t *testing.T) {
 
 }
 
-func TestReconcile(t *testing.T) {
+func TestMeshUpdateSubsets(t *testing.T) {
 
 }
 
-func TestUpdateSubsets(t *testing.T) {
+func TestMeshNewEndpoint(t *testing.T) {
+
+}
+
+func TestLabels(t *testing.T) {
+
+}
+
+func TestSetLabels(t *testing.T) {
+
+}
+
+func TestLabels(t *testing.T) {
+
+}
+
+func TestGetLabelValue(t *testing.T) {
+
+}
+
+func TestSetLabelValue(t *testing.T) {
 
 }
