@@ -45,6 +45,7 @@ import (
 	"net"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -370,8 +371,10 @@ func (m *Mesh) UpdateSubsets(subsetEvents []SubsetEvent) {
 	}
 }
 
-// NewEndpoint is a boiler plate function intended for platform Controllers to create a new Endpoint. This method
-// ensures all the necessary data required for creating subsets are correctly setup.
+// NewEndpoint is a boiler plate function intended for platform Controllers to create a new Endpoint.
+// This method ensures all the necessary data required for creating subsets are correctly setup. It
+// also performs sorting of arrays etc, to allow stable results for reflect.DeepEquals() for quick
+// comparisons.
 func NewEndpoint(endpointUID, service string, aliases []string, address string, port uint32, protocol Protocol, labels Labels, user string) (*Endpoint, error) {
 	var errs error
 	ipAddr := net.ParseIP(address)
@@ -379,7 +382,7 @@ func NewEndpoint(endpointUID, service string, aliases []string, address string, 
 		errs = multierror.Append(errs, errors.New(fmt.Sprintf("invalid IP address '%s'", address)))
 	}
 	svcParts := svcRegexp.FindStringSubmatch(service)
-	if svcParts == nil || len(svcParts) != 2 {
+	if svcParts == nil || len(svcParts) != 3 {
 		errs = multierror.Append(
 			errors.New(fmt.Sprintf(
 				"invalid service name format, expecting form <name>.<namespace>.svc.cluster.local found'%s'",
@@ -427,6 +430,7 @@ func NewEndpoint(endpointUID, service string, aliases []string, address string, 
 		},
 	}
 
+	// Populate Istio destination labels.
 	destLabels[UID.stringValue()] = endpointUID
 	destLabels[SERVICE.stringValue()] = service
 	destLabels[NAMESPACE.stringValue()] = svcParts[1]
@@ -434,15 +438,15 @@ func NewEndpoint(endpointUID, service string, aliases []string, address string, 
 	destLabels[IP.stringValue()] = ipAddr.String()
 	destLabels[PORT.stringValue()] = strconv.Itoa((int)(port))
 	destLabels[USER.stringValue()] = user
+	ep.setLabels(destLabels)
 
 	// Populate destination labels pertaining to alias
 	serviceNames := make([]string, len(aliases)+1)
 	copy(serviceNames, aliases)
 	serviceNames[len(serviceNames)-1] = svcParts[0]
+	// Sort for stable comparisons down the line.
+	sort.Strings(serviceNames)
 	ep.setLabelValues(NAME.stringValue(), serviceNames)
-
-	// Populate Istio destination labels.
-	ep.setLabels(destLabels)
 
 	return &ep, nil
 }
@@ -472,7 +476,9 @@ func (ep *Endpoint) getLabels() Labels {
 	return out
 }
 
-// getLabelValue gets a label value matching attrName.
+// getLabelValue returns the label value matching attrName and true
+// if the endpoint has the supplied attrName. Otherwise this method
+// returns an empty string and false.
 func (ep *Endpoint) getLabelValue(attrName string) (string, bool) {
 	metadata := ep.Metadata
 	if metadata == nil {
@@ -539,6 +545,9 @@ func (ep *Endpoint) getIstioMetadata() map[string]*types.Value {
 		ep.Metadata = metadata
 	}
 	filterMap := metadata.GetFilterMetadata()
+	if filterMap == nil {
+		metadata.FilterMetadata = map[string]*types.Struct{}
+	}
 	configLabels := filterMap[istioConfigFilter]
 	if configLabels == nil {
 		configLabels = &types.Struct{}
