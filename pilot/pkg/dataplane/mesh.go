@@ -29,12 +29,12 @@
 //   ...
 //   var allEndpoints []*model.ServiceInstances
 //   nativeEndpoints = buildYourPlatformServiceEndpointList()
-//   SusbsetEndpoints := make([]*Endpoint, len(nativeEndpoints))
+//   SubsetEndpoints := make([]*Endpoint, len(nativeEndpoints))
 //	 for idx, nativeEp := range nativeEndpoints {
 //     // Create mesh endpoint from relevant values of nativeEp
-//	   SusbsetEndpoints[idx] = NewEndpoint(......)
+//	   SubsetEndpoints[idx] = NewEndpoint(......)
 //   }
-//   pc.Reconcile(SusbsetEndpoints)
+//   pc.Reconcile(SubsetEndpoints)
 //
 package dataplane
 
@@ -82,6 +82,9 @@ const (
 	// belongs to. Example: "my-svc"
 	DestinationName DestinationAttribute = "destination.name"
 
+	// DestinationName represents the namespace of the service. Example: "default"
+	DestinationNamespace DestinationAttribute = "destination.namespace"
+
 	// DestinationDomain represents the domain portion of the service name, excluding
 	// the name and namespace, example: svc.cluster.local
 	DestinationDomain DestinationAttribute = "destination.domain"
@@ -95,6 +98,14 @@ const (
 
 	// DestinationPort represents the recipient port on the server IP address, Example: 443
 	DestinationPort DestinationAttribute = "destination.port"
+
+	// DestinationUser represents the user running the destination application, example:
+	// my-workload-identity
+	DestinationUser DestinationAttribute = "destination.user"
+
+	// DestinationProtocol represents the protocol of the connection being proxied, example:
+	// grpc
+	DestinationProtocol DestinationAttribute = "context.protocol"
 
 	// nameValueSeparator is a separator for creating label name-value keys used for
 	// reverse lookups on labels.
@@ -352,9 +363,9 @@ func (m *Mesh) ReconcileDeltas(endpointChanges []EndpointChange) error {
 	return errors.New("unsupported interface, use Reconcile() instead")
 }
 
-// SusbsetEndpoints implements functionality required for EDS and returns a list of endpoints
+// SubsetEndpoints implements functionality required for EDS and returns a list of endpoints
 // that match one or more subsets.
-func (m *Mesh) SusbsetEndpoints(subsetNames []string) []*Endpoint {
+func (m *Mesh) SubsetEndpoints(subsetNames []string) []*Endpoint {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	epSet := endpointSet{}
@@ -442,6 +453,13 @@ func (m *Mesh) UpdateRules(ruleChanges []RuleChange) error {
 // This method ensures all the necessary data required for creating subsets are correctly setup. It
 // also performs sorting of arrays etc, to allow stable results for reflect.DeepEquals() for quick
 // comparisons.
+// Args:
+//		address		is the network address of this endpoint that must be accessible from __THIS__
+//					Pilot, i.e. one importing the Endpoint into its Mesh via Reconcile(). If a remote
+//					exposes a gateway, the remote pilot exposes the gateway's address. The gateway
+//					itself may have more than one Endpoints behind it that are not directly
+//					network accessible from this Pilot.
+//		port		is the network port of this endpoint that must be accessible from __THIS__ pilot.
 func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, labels []EndpointLabel) (*Endpoint, error) {
 	var errs error
 	ipAddr := net.ParseIP(address)
@@ -449,7 +467,7 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 		errs = multierror.Append(errs, fmt.Errorf("invalid IP address '%s'", address))
 	}
 	hasUID := false
-	svcNames := []string{}
+	svcFQDNs := []string{}
 	svcDomains := []string{}
 	miscLabels := make(map[string]string, len(labels))
 	for _, label := range labels {
@@ -460,13 +478,19 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 		}
 		switch label.Name {
 		case DestinationService.AttrName():
-			svcNames = append(svcNames, label.Value)
+			svcFQDNs = append(svcFQDNs, label.Value)
 		case DestinationDomain.AttrName():
 			svcDomains = append(svcDomains, label.Value)
 		case DestinationUID.AttrName():
 			hasUID = true
 			fallthrough
 		default:
+			oldValue, found := miscLabels[label.Name]
+			if found {
+				errs = multierror.Append(fmt.Errorf(
+					"single value label '%s' has multiple values ['%s','%s']", label.Name, oldValue, label.Value))
+				continue
+			}
 			miscLabels[label.Name] = label.Value
 		}
 	}
@@ -476,15 +500,12 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 		sockAddrProtocol = xdsapi.SocketAddress_TCP
 	case SocketProtocolUDP:
 		sockAddrProtocol = xdsapi.SocketAddress_UDP
-	default:
-		errs = multierror.Append(errors.New(
-			"invalid value for Endpoint socket protocl must be one of SocketProtocolUDP or SocketProtocolTCP."))
 	}
 	if !hasUID {
 		errs = multierror.Append(fmt.Errorf(
 			"missing Endpoint mandatory label '%s'", DestinationUID.AttrName()))
 	}
-	if len(svcNames) == 0 {
+	if len(svcFQDNs) == 0 {
 		errs = multierror.Append(fmt.Errorf(
 			"missing Endpoint mandatory label '%s'", DestinationService.AttrName()))
 	}
@@ -513,8 +534,8 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 	// Populate endpoint labels.
 	ep.setSingleValuedAttrs(miscLabels)
 	// Sort for stable comparisons down the line.
-	sort.Strings(svcNames)
-	ep.setMultiValuedAttrs(DestinationService.AttrName(), svcNames)
+	sort.Strings(svcFQDNs)
+	ep.setMultiValuedAttrs(DestinationService.AttrName(), svcFQDNs)
 	sort.Strings(svcDomains)
 	ep.setMultiValuedAttrs(DestinationDomain.AttrName(), svcDomains)
 	return &ep, nil
@@ -543,7 +564,7 @@ func (ep *Endpoint) getSingleValuedAttrs() map[string]string {
 	if metadataFields == nil {
 		return nil
 	}
-	var out map[string]string
+	out := make(map[string]string, len(metadataFields))
 	for attrName, attrValue := range metadataFields {
 		labelValue := attrValue.GetStringValue()
 		if labelValue == "" {
@@ -601,14 +622,18 @@ func (ep *Endpoint) createIstioMetadata() map[string]*types.Value {
 		metadata = &xdsapi.Metadata{}
 		ep.Metadata = metadata
 	}
-	filterMap := metadata.GetFilterMetadata()
+	filterMap := metadata.FilterMetadata
 	if filterMap == nil {
-		metadata.FilterMetadata = map[string]*types.Struct{}
+		filterMap = map[string]*types.Struct{}
+		metadata.FilterMetadata = filterMap
 	}
 	configLabels := filterMap[istioConfigFilter]
 	if configLabels == nil {
 		configLabels = &types.Struct{}
 		filterMap[istioConfigFilter] = configLabels
+	}
+	if configLabels.Fields == nil {
+		configLabels.Fields = map[string]*types.Value{}
 	}
 	return configLabels.Fields
 }
@@ -619,7 +644,7 @@ func (ep *Endpoint) getIstioMetadata() map[string]*types.Value {
 	if metadata == nil {
 		return nil
 	}
-	filterMap := metadata.GetFilterMetadata()
+	filterMap := metadata.FilterMetadata
 	if filterMap == nil {
 		return nil
 	}
