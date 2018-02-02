@@ -88,6 +88,9 @@ var (
 	testPorts = []uint32{80, 443, 8080}
 
 	testProtocols = []string{"http", "https", "grpc", "redis", "mongo"}
+
+	bm10KEps []*Endpoint
+	bm1MEps  []*Endpoint
 )
 
 // Enums used to tweak attributes while
@@ -167,6 +170,7 @@ func TestMeshXDS(t *testing.T) {
 					testLabelApp:                  "app-1",
 					testLabelVer:                  "version-1"})
 			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
+			t.Log(len(actualEps))
 			assertEqualEndpointLists(t, expectedEps, actualEps)
 		})
 		t.Run("SubsetNames", func(t *testing.T) {
@@ -178,6 +182,7 @@ func TestMeshXDS(t *testing.T) {
 		t.Run("SubsetEndpoints", func(t *testing.T) {
 			t.Parallel()
 			actualEps := tm.SubsetEndpoints(expectedSubsets)
+			t.Log(len(actualEps))
 			assertEqualEndpointLists(t, expectedEps, actualEps)
 		})
 		t.Run("FetchServiceNoLabels", func(t *testing.T) {
@@ -185,6 +190,7 @@ func TestMeshXDS(t *testing.T) {
 			_, expectedEps := buildEndpoints(t, countEps, svcSpread, lblSpread,
 				map[string]string{DestinationService.AttrName(): "test-service-1.default.domain-1.com"})
 			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com"})
+			t.Log(len(actualEps), len(actualEps))
 			assertEqualEndpointLists(t, expectedEps, actualEps)
 		})
 		t.Run("FetchNonExistentService", func(t *testing.T) {
@@ -193,6 +199,62 @@ func TestMeshXDS(t *testing.T) {
 			assertEqualEndpointLists(t, []*Endpoint{}, actualEps)
 		})
 	})
+}
+
+func BenchmarkMesh10KEpReconcile(b *testing.B) {
+	if bm10KEps == nil {
+		svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
+		lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
+		_, bm10KEps = buildEndpoints(b, 10000, svcSpread, lblSpread, map[string]string{})
+	}
+	tm := NewMesh()
+	err := tm.Reconcile(bm10KEps)
+	if err != nil {
+		b.Error(err)
+	}
+	b.ResetTimer()
+	err = tm.Reconcile(bm10KEps)
+	if err != nil {
+		b.Error(err)
+	}
+}
+
+func BenchmarkMeshMillionEpUpdateRule(b *testing.B) {
+	if bm1MEps == nil {
+		svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
+		lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
+		_, bm1MEps = buildEndpoints(b, 1000000, svcSpread, lblSpread, map[string]string{})
+	}
+	tm := NewMesh()
+	err := tm.Reconcile(bm1MEps)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	ruleChanges := []RuleChange{{
+		Rule: &route.DestinationRule{
+			Name: "test-service-1.default.domain-1.com",
+			Subsets: []*route.Subset{&route.Subset{
+				Name: "app-1-version-1",
+				Labels: map[string]string{
+					testLabelApp: "app-1",
+					testLabelVer: "version-1",
+				},
+			}},
+		},
+		Type: ConfigAdd,
+	}}
+	b.ResetTimer()
+	err = tm.UpdateRules(ruleChanges)
+	if err != nil {
+		b.Error(err)
+	}
+	b.StopTimer()
+	actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
+	//	if len(actualEps) != 500000 {
+	//		b.Errorf("test failed, expected 500K endpoints, found %d", len(actualEps))
+	//	}
+	b.Log(len(actualEps))
 }
 
 // TestMeshEndpointDeepEquals
@@ -370,7 +432,7 @@ func (attr attrToChange) String() string {
 // the corresponding count of labels will not have any labels. The skipping begins after the count of endpoints with
 // the largest label count has completed.
 func buildEndpoints(
-	t *testing.T, countEp int, svcSpread []int, labelSpread []int, filterBy map[string]string) (subsetNames []string, endpoints []*Endpoint) {
+	t testing.TB, countEp int, svcSpread []int, labelSpread []int, filterBy map[string]string) (subsetNames []string, endpoints []*Endpoint) {
 	type svcInfo struct {
 		serviceName    string
 		countToNextSvc int
@@ -462,7 +524,7 @@ func buildEndpoints(
 			lblIdx++
 			filterCount = testAndIncrFilterCount(filterBy, labelName, labelValue, filterCount)
 		}
-		// t.Logf("A: %s, P %d, Lbsl: %v\n", addr, port, epLabels)
+		// t.Logf("Lbsl: %v\n", epLabels)
 		ep, err := NewEndpoint(addr, port, SocketProtocolTCP, epLabels)
 		if err != nil {
 			t.Fatalf("bad test data: %s", err.Error())
@@ -479,7 +541,8 @@ func buildEndpoints(
 			sSpec.currEpCount = 0
 			currSvcIdx = (currSvcIdx + 1) % len(svcSpread)
 		}
-		for _, lSpec := range labelSpec {
+		for idx := range labelSpec {
+			lSpec := &labelSpec[idx]
 			lSpec.currValue = (lSpec.currValue + 1) % lSpec.countValues
 		}
 	}
@@ -496,7 +559,7 @@ func testAndIncrFilterCount(filteryBy map[string]string, attrName, attrValue str
 	return currFilterCount
 }
 
-func buildEndpoint(t *testing.T, delta attrToChange, assertError bool) (*Endpoint, error) {
+func buildEndpoint(t testing.TB, delta attrToChange, assertError bool) (*Endpoint, error) {
 	// Setup defaults
 	namespace := "default"
 	service := testService1
