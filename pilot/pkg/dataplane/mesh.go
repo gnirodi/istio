@@ -29,13 +29,29 @@
 //   ...
 //   var allEndpoints []*model.ServiceInstances
 //   nativeEndpoints = buildYourPlatformServiceEndpointList()
-//   SubsetEndpoints := make([]*Endpoint, len(nativeEndpoints))
+//   subsetEndpoints := make([]*Endpoint, len(nativeEndpoints))
 //	 for idx, nativeEp := range nativeEndpoints {
 //     // Create mesh endpoint from relevant values of nativeEp
-//	   SubsetEndpoints[idx] = NewEndpoint(......)
+//	   subsetEndpoints[idx] = NewEndpoint(......)
 //   }
-//   pc.Reconcile(SubsetEndpoints)
+//   err := pc.Reconcile(subsetEndpoints)
 //
+// Internally xDS will use the following interfaces for:
+// (Service-)Cluster Discovery Service:
+//
+//   serviceClusters := pc.SubsetNames()
+//
+// Endpoint Discovery Service:
+//   var listOfSubsets []string{}
+//   listOfSubsets := somePkg.FigureOutSubsetsToQuery()
+//   subsetEndpoints := pc.SubsetEndpoints(listOfSubsets)
+//
+//
+// Internally Galley will use the following interfaces for
+// updating Pilot:
+//    var routeRuleChanges []RuleChange
+//    routeRuleChanges := somePkg.FigureOutRouteRuleChanges()
+//    err := pc.UpdateRules(routeRuleChanges)
 package dataplane
 
 import (
@@ -57,11 +73,13 @@ import (
 )
 
 const (
+	// TODO: move istioConfigFilter to github.com/istio.io/api
 	// The internal filter name for attributes that should be used for
 	// constructing Istio attributes on the Endpoint in reverse DNS
 	// form. See xdsapi.Metadata.Name
 	istioConfigFilter = "io.istio.istio-config"
 
+	// TODO: move all DestinationAttributes to github.com/istio.io/api
 	// Key Istio attribute names for mapping endpoints to subsets.
 	// For details, please see
 	// https://istio.io/docs/reference/config/mixer/attribute-vocabulary.html
@@ -120,7 +138,12 @@ const (
 	wildCardDomainPrefix = "*."
 )
 
-// Enumerated constants for ConfigChangeType.
+// Enumerated constants for ConfigChangeType to indicate that
+// the associated config data is being added, updated or deleted.
+// The association implicitly expects the associated config data
+// to furnish some form of unique identification so that this
+// configuration element is updated independently of all other
+// configuration elements within this pilot.
 const (
 	_                          = iota
 	ConfigAdd ConfigChangeType = iota
@@ -128,20 +151,23 @@ const (
 	ConfigDelete
 )
 
-// Enumerated constants for SocketProtocol.
+// Enumerated constants for SocketProtocol that's coupled with
+// the internal implementation (Envoy lbEndoi
 const (
 	_                                = iota
 	SocketProtocolTCP SocketProtocol = iota
 	SocketProtocolUDP
 )
 
-// Enumerated constants for DestinationRuleType.
+// Enumerated constants for DestinationRuleType based on how route.DestinationRule.Name
+// should be interpreted.
+// TODO: Move DestinationRuleType to github.com/istio.io/api
 const (
 	_ = iota
-	// DestinationRuleDomain is a type of destination rule where the
+	// DestinationRuleService is a type of destination rule where the
 	// rule name is an FQDN of the service and resulting Subsets ought
 	// to be further scoped to this FQDN.
-	DestinationRuleDomain DestinationRuleType = iota
+	DestinationRuleService DestinationRuleType = iota
 
 	// DestinationRuleName is a type of destination rule where
 	// the rule name is the short name of the service and the
@@ -263,9 +289,9 @@ type EndpointChange struct {
 
 type ConfigChangeType int
 
-type SocketProtocol int
-
 type DestinationRuleType int
+
+type SocketProtocol int
 
 type EndpointLabel struct {
 	Name  string
@@ -367,7 +393,6 @@ func (m *Mesh) ReconcileDeltas(endpointChanges []EndpointChange) error {
 // that match one or more subsets.
 func (m *Mesh) SubsetEndpoints(subsetNames []string) []*Endpoint {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
 	epSet := endpointSet{}
 	for _, ssName := range subsetNames {
 		ssEpSet, found := m.subsetEndpoints[ssName]
@@ -376,6 +401,7 @@ func (m *Mesh) SubsetEndpoints(subsetNames []string) []*Endpoint {
 		}
 		epSet.appendAll(ssEpSet)
 	}
+	m.mu.RUnlock()
 	out := make([]*Endpoint, len(epSet))
 	idx := 0
 	for ep := range epSet {
@@ -415,24 +441,23 @@ func (m *Mesh) UpdateRules(ruleChanges []RuleChange) error {
 			scopedSSName := rule.Name + RuleSubsetSeparator + subset.Name
 			if ruleChange.Type == ConfigDelete || ruleChange.Type == ConfigUpdate {
 				oldEpSet := m.subsetEndpoints[scopedSSName]
-				for ep := range oldEpSet {
-					m.reverseEpSubsets.deleteSubset(ep, scopedSSName)
-				}
+				m.reverseEpSubsets.deleteSubsetForEndpoints(oldEpSet, scopedSSName)
 				delete(m.subsetEndpoints, scopedSSName)
+				delete(m.subsetDefinitions, scopedSSName)
 			}
 			if ruleChange.Type == ConfigAdd || ruleChange.Type == ConfigUpdate {
 				var labelsToMatch map[string]string
 				switch ruleType {
-				case DestinationRuleDomain:
+				case DestinationRuleService:
 					labelsToMatch =
-						newMapWithLabelValue(subset.GetLabels(), DestinationDomain.AttrName(), labelValue)
+						newMapWithLabelValue(subset.GetLabels(), DestinationService.AttrName(), labelValue)
 				case DestinationRuleIP:
 					labelsToMatch =
 						newMapWithLabelValue(subset.GetLabels(), DestinationIP.AttrName(), labelValue)
 				case DestinationRuleName:
 					labelsToMatch =
 						newMapWithLabelValue(subset.GetLabels(), DestinationName.AttrName(), labelValue)
-				case DestinationRuleWildcard | DestinationRuleWildcard:
+				case DestinationRuleCIDR | DestinationRuleWildcard:
 					// Direct matches will not work. Scoping is done later.
 					labelsToMatch = subset.GetLabels()
 				}
@@ -443,6 +468,8 @@ func (m *Mesh) UpdateRules(ruleChanges []RuleChange) error {
 					newEpSubset = newEpSubset.scopeToRule(ruleType, labelValue, cidrNet)
 				}
 				m.subsetEndpoints.addEndpointSet(scopedSSName, newEpSubset)
+				m.reverseEpSubsets.addSubsetForEndpoints(newEpSubset, scopedSSName)
+				m.subsetDefinitions[scopedSSName] = subset
 			}
 		}
 	}
@@ -494,13 +521,6 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 			miscLabels[label.Name] = label.Value
 		}
 	}
-	var sockAddrProtocol xdsapi.SocketAddress_Protocol
-	switch socketProtocol {
-	case SocketProtocolTCP:
-		sockAddrProtocol = xdsapi.SocketAddress_TCP
-	case SocketProtocolUDP:
-		sockAddrProtocol = xdsapi.SocketAddress_UDP
-	}
 	if !hasUID {
 		errs = multierror.Append(fmt.Errorf(
 			"missing Endpoint mandatory label '%s'", DestinationUID.AttrName()))
@@ -512,6 +532,13 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 	if errs != nil {
 		return nil, multierror.Prefix(errs, "Mesh endpoint creation errors")
 	}
+	var epSocketProtocol xdsapi.SocketAddress_Protocol
+	switch socketProtocol {
+	case SocketProtocolTCP:
+		epSocketProtocol = xdsapi.SocketAddress_TCP
+	case SocketProtocolUDP:
+		epSocketProtocol = xdsapi.SocketAddress_UDP
+	}
 	miscLabels[DestinationIP.AttrName()] = ipAddr.String()
 	miscLabels[DestinationPort.AttrName()] = strconv.Itoa((int)(port))
 	ep := Endpoint{
@@ -521,7 +548,7 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 					&xdsapi.SocketAddress{
 						Address:    address,
 						Ipv4Compat: ipAddr.To4() != nil,
-						Protocol:   sockAddrProtocol,
+						Protocol:   epSocketProtocol,
 						PortSpecifier: &xdsapi.SocketAddress_PortValue{
 							PortValue: port,
 						},
@@ -543,10 +570,10 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 
 func determineRuleScope(ruleName string) (DestinationRuleType, string, *net.IPNet) {
 	if strings.HasPrefix(ruleName, wildCardDomainPrefix) {
-		return DestinationRuleDomain, ruleName[2:], nil
+		return DestinationRuleService, ruleName[2:], nil
 	}
 	_, ciderNet, cidrErr := net.ParseCIDR(ruleName)
-	if cidrErr != nil {
+	if cidrErr == nil {
 		return DestinationRuleCIDR, "", ciderNet
 	}
 	ip := net.ParseIP(ruleName)
@@ -556,7 +583,7 @@ func determineRuleScope(ruleName string) (DestinationRuleType, string, *net.IPNe
 	if !strings.Contains(ruleName, ".") {
 		return DestinationRuleName, ruleName, nil
 	}
-	return DestinationRuleDomain, ruleName, nil
+	return DestinationRuleService, ruleName, nil
 }
 
 func (ep *Endpoint) getSingleValuedAttrs() map[string]string {
@@ -793,10 +820,10 @@ func (le labelEndpoints) deleteLabel(labelKey string, ep *Endpoint) {
 // addLabelEndpoints merges other labelEndpoints with le.
 func (le labelEndpoints) addLabelEndpoints(other labelEndpoints) {
 	for labelKey, otherEpSet := range other {
-		epSet, found := le[labelKey]
-		if len(epSet) == 0 {
+		if len(otherEpSet) == 0 {
 			continue
 		}
+		epSet, found := le[labelKey]
 		if !found {
 			epSet = make(endpointSet, len(otherEpSet))
 			le[labelKey] = epSet
@@ -847,6 +874,13 @@ func (eps endpointSet) scopeToRule(ruleType DestinationRuleType, labelValue stri
 	return out
 }
 
+// addSubsetForEndpoints associates a subsetName for each of the endpoints in epSet.
+func (es endpointSubsets) addSubsetForEndpoints(epSet endpointSet, subsetName string) {
+	for ep := range epSet {
+		es.addSubset(ep, subsetName)
+	}
+}
+
 // addSubset adds a subset name to an existing set of subset names mapped to the endpoint
 func (es endpointSubsets) addSubset(ep *Endpoint, subsetName string) {
 	ssNames, found := es[ep]
@@ -855,6 +889,13 @@ func (es endpointSubsets) addSubset(ep *Endpoint, subsetName string) {
 		es[ep] = ssNames
 	}
 	ssNames[subsetName] = true
+}
+
+// deleteSubsetForEndpoints removes the association of the subsetName for each of the endpoints in epSet.
+func (es endpointSubsets) deleteSubsetForEndpoints(epSet endpointSet, subsetName string) {
+	for ep := range epSet {
+		es.deleteSubset(ep, subsetName)
+	}
 }
 
 // deleteSubset deletes a subset key from the set of subset keys mapped to the endpoint key
@@ -881,6 +922,9 @@ func (se subsetEndpoints) addEndpoint(subsetName string, ep *Endpoint) {
 
 // addEndpointSet adds a set of endpoints to an existing set of endpoints mapped to the subset name
 func (se subsetEndpoints) addEndpointSet(subsetName string, otherEpSet endpointSet) {
+	if len(otherEpSet) == 0 {
+		return
+	}
 	epSet, found := se[subsetName]
 	if !found {
 		epSet = make(endpointSet, len(otherEpSet))

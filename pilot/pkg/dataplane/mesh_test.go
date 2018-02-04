@@ -15,6 +15,7 @@
 package dataplane
 
 import (
+	"math"
 	"reflect"
 	"sort"
 	"strconv"
@@ -88,9 +89,6 @@ var (
 	testPorts = []uint32{80, 443, 8080}
 
 	testProtocols = []string{"http", "https", "grpc", "redis", "mongo"}
-
-	bm10KEps []*Endpoint
-	bm1MEps  []*Endpoint
 )
 
 // Enums used to tweak attributes while
@@ -111,12 +109,14 @@ func TestMeshXDS(t *testing.T) {
 		actual := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com"})
 		assertEqualEndpointLists(t, expectedEps, actual)
 	})
-	countEps := 10
-	svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
-	lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
-	expectedSubsets, expectedEps := buildEndpoints(t, countEps, svcSpread, lblSpread, map[string]string{})
+	countEps, countSvcs, countSubsetsPerSvc := 32, 2, 2
+	rules, subsets, endpoints := buildTestEndpoints(t, countEps, countSvcs, countSubsetsPerSvc)
+	expectedSubsets := make([]string, countSvcs)
+	for i := 0; i < countSvcs; i++ {
+		expectedSubsets[i] = "test-service-" + strconv.Itoa(i+1)
+	}
+	err := tm.Reconcile(expectedEps)
 	t.Run("AfterReconcile", func(t *testing.T) {
-		err := tm.Reconcile(expectedEps)
 		if err != nil {
 			t.Error(err)
 			return
@@ -133,10 +133,8 @@ func TestMeshXDS(t *testing.T) {
 		})
 		t.Run("FetchServiceNoLabels", func(t *testing.T) {
 			t.Parallel()
-			_, expectedEps := buildEndpoints(t, countEps, svcSpread, lblSpread,
-				map[string]string{DestinationService.AttrName(): "test-service-1.default.domain-1.com"})
 			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com"})
-			assertEqualEndpointLists(t, expectedEps, actualEps)
+			assertEqualEndpointLists(t, endpoints[0:countEps/2], actualEps)
 		})
 		t.Run("FetchNonExistentService", func(t *testing.T) {
 			t.Parallel()
@@ -146,16 +144,7 @@ func TestMeshXDS(t *testing.T) {
 	})
 	t.Run("AfterUpdateRules", func(t *testing.T) {
 		err := tm.UpdateRules([]RuleChange{{
-			Rule: &route.DestinationRule{
-				Name: "test-service-1.default.domain-1.com",
-				Subsets: []*route.Subset{&route.Subset{
-					Name: "app-1-version-1",
-					Labels: map[string]string{
-						testLabelApp: "app-1",
-						testLabelVer: "version-1",
-					},
-				}},
-			},
+			Rule: rules[0],
 			Type: ConfigAdd,
 		}})
 		if err != nil {
@@ -164,34 +153,24 @@ func TestMeshXDS(t *testing.T) {
 		}
 		t.Run("LabeledSubset", func(t *testing.T) {
 			t.Parallel()
-			_, expectedEps := buildEndpoints(t, countEps, svcSpread, lblSpread,
-				map[string]string{
-					DestinationService.AttrName(): "test-service-1.default.domain-1.com",
-					testLabelApp:                  "app-1",
-					testLabelVer:                  "version-1"})
-			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
-			t.Log(len(actualEps))
-			assertEqualEndpointLists(t, expectedEps, actualEps)
+			actualEps := tm.SubsetEndpoints([]string{subsets[0].Name})
+			assertEqualEndpointLists(t, endpoints[0:4], actualEps)
 		})
 		t.Run("SubsetNames", func(t *testing.T) {
 			t.Parallel()
 			actualSubsets := tm.SubsetNames()
-			expectedSubsets = append(expectedSubsets, "test-service-1.default.domain-1.com|app-1-version-1")
+			expectedSubsets = append(expectedSubsets, "test-service-1.default.domain-1.com|"+subsets[0].Name)
 			assertEqualsSubsetNames(t, expectedSubsets, actualSubsets)
 		})
 		t.Run("SubsetEndpoints", func(t *testing.T) {
 			t.Parallel()
 			actualEps := tm.SubsetEndpoints(expectedSubsets)
-			t.Log(len(actualEps))
 			assertEqualEndpointLists(t, expectedEps, actualEps)
 		})
 		t.Run("FetchServiceNoLabels", func(t *testing.T) {
 			t.Parallel()
-			_, expectedEps := buildEndpoints(t, countEps, svcSpread, lblSpread,
-				map[string]string{DestinationService.AttrName(): "test-service-1.default.domain-1.com"})
 			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com"})
-			t.Log(len(actualEps), len(actualEps))
-			assertEqualEndpointLists(t, expectedEps, actualEps)
+			assertEqualEndpointLists(t, endpoints[0:4], actualEps)
 		})
 		t.Run("FetchNonExistentService", func(t *testing.T) {
 			t.Parallel()
@@ -199,34 +178,39 @@ func TestMeshXDS(t *testing.T) {
 			assertEqualEndpointLists(t, []*Endpoint{}, actualEps)
 		})
 	})
+	// Uncomment for debugging!
+	//	t.Logf(
+	//		"tm.reverseAttrMap:\n%v\n\ntm.reverseEpSubsets:\n%v\n\ntm.subsetEndpoints:\n%v\n\ntm.subsetDefinitions:\n%v\n\ntm.allEndpoints:\n%v\n\n",
+	//		tm.reverseAttrMap, tm.reverseEpSubsets, tm.subsetEndpoints, tm.subsetDefinitions, tm.allEndpoints)
 }
 
-func BenchmarkMesh10KEpReconcile(b *testing.B) {
-	if bm10KEps == nil {
-		svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
-		lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
-		_, bm10KEps = buildEndpoints(b, 10000, svcSpread, lblSpread, map[string]string{})
-	}
+/*
+func BenchmarkMeshReconcile(b *testing.B) {
+	svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
+	lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
+	_, testEps, _ := buildEndpoints(b, 10000, svcSpread, lblSpread, map[string]string{})
 	tm := NewMesh()
-	err := tm.Reconcile(bm10KEps)
+	err := tm.Reconcile(testEps)
 	if err != nil {
 		b.Error(err)
+		return
 	}
 	b.ResetTimer()
-	err = tm.Reconcile(bm10KEps)
-	if err != nil {
-		b.Error(err)
+	for i := 0; i < b.N; i++ {
+		err = tm.Reconcile(testEps)
+		if err != nil {
+			b.Error(err)
+			return
+		}
 	}
 }
 
-func BenchmarkMeshMillionEpUpdateRule(b *testing.B) {
-	if bm1MEps == nil {
-		svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
-		lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
-		_, bm1MEps = buildEndpoints(b, 1000000, svcSpread, lblSpread, map[string]string{})
-	}
+func BenchmarkMeshUpdateRules(b *testing.B) {
+	svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
+	lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
+	_, testEps, _ := buildEndpoints(b, 1000000, svcSpread, lblSpread, map[string]string{})
 	tm := NewMesh()
-	err := tm.Reconcile(bm1MEps)
+	err := tm.Reconcile(testEps)
 	if err != nil {
 		b.Error(err)
 		return
@@ -245,17 +229,74 @@ func BenchmarkMeshMillionEpUpdateRule(b *testing.B) {
 		Type: ConfigAdd,
 	}}
 	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err = tm.UpdateRules(ruleChanges)
+		if err != nil {
+			b.Error(err)
+			return
+		}
+		b.StopTimer()
+		actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
+		if len(actualEps) != 66667 {
+			b.Errorf("test failed, expected 500K endpoints, found %d", len(actualEps))
+			return
+		}
+		b.StartTimer()
+	}
+}
+
+func bmMeshSubsetEndpointsHelper(b *testing.B, epsCount int, svcSpread []int) {
+	lblSpread := []int{3, 2, 7, 11, 13, 17, 19, 23, 29}
+	_, testEps, expectedFilteredEps := buildEndpoints(b, epsCount, svcSpread, lblSpread, map[string]string{
+		DestinationService.AttrName(): "test-service-1.default.domain-1.com",
+		testLabelApp:                  "app-1",
+		testLabelVer:                  "version-1",
+	})
+	expectedCount := len(expectedFilteredEps)
+	tm := NewMesh()
+	err := tm.Reconcile(testEps)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	ruleChanges := []RuleChange{{
+		Rule: &route.DestinationRule{
+			Name: "test-service-1.default.domain-1.com",
+			Subsets: []*route.Subset{&route.Subset{
+				Name: "app-1-version-1",
+				Labels: map[string]string{
+					testLabelApp: "app-1",
+					testLabelVer: "version-1",
+				},
+			}},
+		},
+		Type: ConfigAdd,
+	}}
 	err = tm.UpdateRules(ruleChanges)
 	if err != nil {
 		b.Error(err)
+		return
 	}
-	b.StopTimer()
-	actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
-	//	if len(actualEps) != 500000 {
-	//		b.Errorf("test failed, expected 500K endpoints, found %d", len(actualEps))
-	//	}
-	b.Log(len(actualEps))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
+		if len(actualEps) != len(expectedFilteredEps) {
+			b.Errorf("test failed, expected %d endpoints, found %d", expectedCount, len(actualEps))
+			return
+		}
+	}
+	// The computed benchmark should match the name!!!
+	computedBmName := fmt.Sprintf("BenchmarkMeshSubsetEndpoints_EP_%d_%d", epsCount, expectedCount)
+	if b.Name() != computedBmName {
+		b.Errorf("Actual benchmark '%s' is out of sync with computed benchmark '%s'", b.Name(), computedBmName)
+	}
 }
+func BenchmarkMeshSubsetEndpoints_EP_1000000_1617(b *testing.B) {
+	// Benchmark: Resultset 0.0067% of 1 Million endpoints
+	// Use multiples of 100 for each service spread value.
+	bmMeshSubsetEndpointsHelper(b, 1000000, []int{100, 100, 100, 100, 10000})
+}
+*/
 
 // TestMeshEndpointDeepEquals
 func TestMeshEndpointDeepEquals(t *testing.T) {
@@ -338,7 +379,7 @@ func assertEqualEndpointLists(t *testing.T, expected, actual []*Endpoint) {
 	for uid, expectedEp := range expectedSet {
 		actualEp, found := actualSet[uid]
 		if !found {
-			t.Errorf("expecting endpoint %s, found none", epDebugInfo(expectedEp))
+			t.Errorf("expecting endpoint\nShortForm: %s\nLongForm  : %s\nfound none", epDebugInfo(expectedEp), *expectedEp)
 			continue
 		}
 		assertEqualEndpoints(t, expectedEp, actualEp)
@@ -427,136 +468,114 @@ func (attr attrToChange) String() string {
 	return (string)(attr)
 }
 
-// buildEndpoints builds countEp endpoints for the service with a specified labelSpread. If filterBy is specified,
-// it will scope the resultset by the label values in filterBy. if labelSpread contains the magic label skipLables
-// the corresponding count of labels will not have any labels. The skipping begins after the count of endpoints with
-// the largest label count has completed.
-func buildEndpoints(
-	t testing.TB, countEp int, svcSpread []int, labelSpread []int, filterBy map[string]string) (subsetNames []string, endpoints []*Endpoint) {
-	type svcInfo struct {
-		serviceName    string
-		countToNextSvc int
-		currEpCount    int
-	}
-	type labelInfo struct {
+func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]*route.DestinationRule,
+	[]*route.Subset, []*Endpoint) {
+	type labelSpec struct {
 		labelName   string
 		countValues int
 		currValue   int
 	}
-
-	// Build the service names we want to create
-	svcSpec := make([]svcInfo, len(svcSpread))
-	for idx, _ := range svcSpec {
-		svcSpec[idx] = svcInfo{
-			serviceName:    "test-service-" + strconv.Itoa(idx+1),
-			countToNextSvc: svcSpread[idx],
-		}
+	maxLblValues := []int{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
+	currLblValues := make([]labelSpec, len(maxLblValues))
+	for idx, labelInfo := range currLblValues {
+		labelInfo.labelName = "label-" + strconv.Itoa(idx+1)
+		labelInfo.countValues = maxLblValues[idx]
 	}
 
-	// Build the label names we want to create
-	labelSpec := make([]labelInfo, len(labelSpread)%len(allTestLabels))
-	for idx, _ := range labelSpec {
-		labelSpec[idx] = labelInfo{
-			labelName:   allTestLabels[idx],
-			countValues: labelSpread[idx],
+	ttlSubsets := cntSvcs * cntSubsetsPerSvc
+	outRules := make([]*route.DestinationRule, cntSvcs)
+	outSubsets := make([]*route.Subset, ttlSubsets)
+	outEndpoints := make([]*Endpoint, cntEps)
+	// Assuming normal distribution.
+	sig := -3.0
+	sigIncr := (float64)(ttlSubsets) / (float64)(cntEps) * 6.0
+	prevCdf := 0.0
+	epIdx := 0
+	ssIdx := 0
+	for svcIdx := 0; svcIdx < cntSvcs; svcIdx++ {
+		serviceName := "test-service-" + strconv.Itoa(svcIdx+1)
+		domIdx := svcIdx % len(testDomainSets)
+		svcDomains := testDomainSets[domIdx]
+		rule := &route.DestinationRule{
+			Name:    serviceName + "." + svcDomains[0],
+			Subsets: make([]*route.Subset, cntSubsetsPerSvc),
 		}
-	}
-	subsetNames = []string{}
-	var firstOctet int
-	currSvcIdx := 0
-	for i := 0; i < countEp; i++ {
-		sSpec := &svcSpec[currSvcIdx]
-		domIdx := currSvcIdx % len(testDomainSets)
-		domains := testDomainSets[domIdx]
+		outRules[svcIdx] = rule
 		var namespace string
 		countLblNS := 0
 		if domIdx == 0 {
-			namespace = testNamespaces[i%len(testNamespaces)]
+			namespace = testNamespaces[svcIdx%len(testNamespaces)]
 			countLblNS = 1
 		}
+		var firstOctet int
 		switch {
-		case currSvcIdx%2 == 0:
+		case svcIdx%2 == 0:
 			firstOctet = 10
 		default:
 			firstOctet = 72
 		}
-		// Build address of the form 10|72.1.1.1 through 10|72.254.254.254
-		addr := strconv.Itoa(firstOctet) + "." +
-			strconv.Itoa(((i%16387064)/64516)+1) + "." +
-			strconv.Itoa(((i%64516)/254)+1) + "." +
-			strconv.Itoa((i%254)+1)
-		port := testPorts[i%len(testPorts)]
-		protocol := testProtocols[i%len(testProtocols)]
-		// UID + Name + Protocol + user+ possibly Namespace + FQDNs + domains + labels
-		epLabels := make([]EndpointLabel, 4+countLblNS+(len(domains)*2)+len(labelSpec))
-		filterCount := 0
-		lblIdx := 0
-		epLabels[lblIdx] = EndpointLabel{DestinationUID.AttrName(), "ep-uid-" + strconv.Itoa(i)}
-		lblIdx++
-		epLabels[lblIdx] = EndpointLabel{DestinationName.AttrName(), sSpec.serviceName}
-		lblIdx++
-		filterCount = testAndIncrFilterCount(
-			filterBy, DestinationName.AttrName(), sSpec.serviceName, filterCount)
-		epLabels[lblIdx] = EndpointLabel{DestinationUser.AttrName(),
-			sSpec.serviceName + "-user-" + strconv.Itoa(currSvcIdx+1)}
-		lblIdx++
-		epLabels[lblIdx] = EndpointLabel{DestinationProtocol.AttrName(), protocol}
-		lblIdx++
-		if countLblNS != 0 {
-			epLabels[lblIdx] = EndpointLabel{DestinationNamespace.AttrName(), namespace}
+		for svcSSIdx := 0; svcSSIdx < cntSubsetsPerSvc; svcSSIdx, ssIdx = svcSSIdx+1, ssIdx+1 {
+			ssIdx := (svcSSIdx * cntSubsetsPerSvc) + svcSSIdx
+			subset := &route.Subset{
+				Name:   "subset-" + strconv.Itoa(svcSSIdx),
+				Labels: make(map[string]string, len(currLblValues)),
+			}
+			rule.Subsets[svcSSIdx] = subset
+			outSubsets[ssIdx] = subset
+			// UID + Protocol + Name + user + possibly Namespace + FQDNs + domains + labels
+			epLabels := make([]EndpointLabel, 4+countLblNS+(len(svcDomains)*2)+len(currLblValues))
+			lblIdx := 2 // UID, Protocol are endpoint specific
+			epLabels[lblIdx] = EndpointLabel{DestinationName.AttrName(), serviceName}
 			lblIdx++
-		}
-		svcNames := make(map[string]bool, len(domains))
-		for _, domain := range domains {
-			svcName := sSpec.serviceName + "." + domain
-			epLabels[lblIdx] =
-				EndpointLabel{DestinationService.AttrName(), svcName}
-			epLabels[lblIdx+1] = EndpointLabel{DestinationDomain.AttrName(), domain}
-			lblIdx += 2
-			filterCount = testAndIncrFilterCount(filterBy, DestinationDomain.AttrName(), domain, filterCount)
-			filterCount = testAndIncrFilterCount(filterBy, DestinationService.AttrName(), svcName, filterCount)
-			svcNames[svcName] = true
-		}
-		for _, lSpec := range labelSpec {
-			labelName := lSpec.labelName
-			labelValue := labelName + "-" + strconv.Itoa(lSpec.currValue)
-			epLabels[lblIdx] = EndpointLabel{labelName, labelValue}
+			epLabels[lblIdx] = EndpointLabel{DestinationUser.AttrName(),
+				serviceName + "-user-" + strconv.Itoa(svcIdx+1)}
 			lblIdx++
-			filterCount = testAndIncrFilterCount(filterBy, labelName, labelValue, filterCount)
-		}
-		// t.Logf("Lbsl: %v\n", epLabels)
-		ep, err := NewEndpoint(addr, port, SocketProtocolTCP, epLabels)
-		if err != nil {
-			t.Fatalf("bad test data: %s", err.Error())
-		}
-		// If filterBy is provided, only add to endpoints if all filter criteria are met.
-		if filterCount == len(filterBy) {
-			endpoints = append(endpoints, ep)
-			for svcName := range svcNames {
-				subsetNames = append(subsetNames, svcName)
+			if countLblNS != 0 {
+				epLabels[lblIdx] = EndpointLabel{DestinationNamespace.AttrName(), namespace}
+				lblIdx++
+			}
+			for _, domain := range svcDomains {
+				epLabels[lblIdx] =
+					EndpointLabel{DestinationService.AttrName(), serviceName + "." + domain}
+				epLabels[lblIdx+1] = EndpointLabel{DestinationDomain.AttrName(), domain}
+				lblIdx += 2
+			}
+			// Fix the labels for this subset
+			for _, labelInfo := range currLblValues {
+				labelName := labelInfo.labelName
+				labelValue := labelName + "-" + strconv.Itoa(labelInfo.currValue+1)
+				subset.Labels[labelName] = labelName + "-" + strconv.Itoa(labelInfo.currValue+1)
+				epLabels[lblIdx] = EndpointLabel{labelName, labelValue}
+				lblIdx++
+			}
+			// Figure out how many endpoints to add to this subset
+			sig += sigIncr
+			currCdf := math.Erfc(-sig/math.Sqrt2) / 2.0
+			epsForSS := (int)(math.Ceil((currCdf - prevCdf) * (float64)(cntEps)))
+			prevCdf = currCdf
+			for epSSIdx := 0; epSSIdx < epsForSS; epIdx, epSSIdx = epIdx+1, epSSIdx+1 {
+				// Build address of the form 10|72.1.1.1 through 10|72.254.254.254
+				addr := strconv.Itoa(firstOctet) + "." +
+					strconv.Itoa(((epIdx%16387064)/64516)+1) + "." +
+					strconv.Itoa(((epIdx%64516)/254)+1) + "." +
+					strconv.Itoa((epIdx%254)+1)
+				port := testPorts[epIdx%len(testPorts)]
+				// Add the endpoint specific labels: UID + Protocol
+				epLabels[0] = EndpointLabel{DestinationUID.AttrName(),
+					"ep-uid-" + strconv.Itoa(epIdx)}
+				epLabels[1] = EndpointLabel{DestinationProtocol.AttrName(),
+					testProtocols[epIdx%len(testProtocols)]}
+				// Uncomment for debugging test data build logic
+				// t.Logf("Lbsl: %v\n", epLabels)
+				ep, err := NewEndpoint(addr, port, SocketProtocolTCP, epLabels)
+				if err != nil {
+					t.Fatalf("bad test data: %s", err.Error())
+				}
+				outEndpoints[epIdx] = ep
 			}
 		}
-		sSpec.currEpCount++
-		if sSpec.currEpCount >= sSpec.countToNextSvc {
-			sSpec.currEpCount = 0
-			currSvcIdx = (currSvcIdx + 1) % len(svcSpread)
-		}
-		for idx := range labelSpec {
-			lSpec := &labelSpec[idx]
-			lSpec.currValue = (lSpec.currValue + 1) % lSpec.countValues
-		}
 	}
-	return subsetNames, endpoints
-}
-
-func testAndIncrFilterCount(filteryBy map[string]string, attrName, attrValue string, currFilterCount int) int {
-	if len(filteryBy) > 0 {
-		filterValue, found := filteryBy[attrName]
-		if found && filterValue == attrValue {
-			return currFilterCount + 1
-		}
-	}
-	return currFilterCount
+	return outRules, outSubsets, outEndpoints
 }
 
 func buildEndpoint(t testing.TB, delta attrToChange, assertError bool) (*Endpoint, error) {
