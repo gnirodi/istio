@@ -15,6 +15,7 @@
 package dataplane
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"sort"
@@ -196,27 +197,31 @@ func TestMeshXDS(t *testing.T) {
 	//		tm.reverseAttrMap, tm.reverseEpSubsets, tm.subsetEndpoints, tm.subsetDefinitions, tm.allEndpoints)
 }
 
-/*
-func BenchmarkMeshReconcile(b *testing.B) {
-	svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
-	lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
-	_, testEps, _ := buildEndpoints(b, 10000, svcSpread, lblSpread, map[string]string{})
-	tm := NewMesh()
-	err := tm.Reconcile(testEps)
-	if err != nil {
-		b.Error(err)
-		return
-	}
-	b.ResetTimer()
+func runReconcileIter(b *testing.B, tm *Mesh, testEps []*Endpoint) {
 	for i := 0; i < b.N; i++ {
-		err = tm.Reconcile(testEps)
+		err := tm.Reconcile(testEps)
 		if err != nil {
 			b.Error(err)
-			return
 		}
 	}
 }
 
+func BenchmarkMeshXds(b *testing.B) {
+	b.Run("Reconcile", func(b *testing.B) {
+		cntEps, cntSvcs, cntSubsetsPerSvc := 50000, 1000, 2
+		tm := NewMesh()
+		_, _, testEps := buildTestEndpoints(b, cntEps, cntSvcs, cntSubsetsPerSvc)
+		b.ResetTimer()
+		benchmarks := []int{1000, 5000, 10000, 25000, cntEps}
+		for _, bm := range benchmarks {
+			b.Run(fmt.Sprintf("EP%d", bm), func(b *testing.B) {
+				runReconcileIter(b, tm, testEps[0:bm])
+			})
+		}
+	})
+}
+
+/*
 func BenchmarkMeshUpdateRules(b *testing.B) {
 	svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
 	lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
@@ -577,7 +582,7 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 				epsForSS = (int)(math.Ceil((currCdf - prevCdf) * (float64)(cntEps)))
 				prevCdf = currCdf
 			}
-			for epSSIdx := 0; epSSIdx < epsForSS; epIdx, epSSIdx = epIdx+1, epSSIdx+1 {
+			for epSSIdx := 0; epIdx < cntEps && epSSIdx < epsForSS; epIdx, epSSIdx = epIdx+1, epSSIdx+1 {
 				// Build address of the form 10|72.1.1.1 through 10|72.254.254.254
 				addr := strconv.Itoa(firstOctet) + "." +
 					strconv.Itoa(((epIdx%16387064)/64516)+1) + "." +
