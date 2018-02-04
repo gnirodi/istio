@@ -110,12 +110,19 @@ func TestMeshXDS(t *testing.T) {
 		assertEqualEndpointLists(t, expectedEps, actual)
 	})
 	countEps, countSvcs, countSubsetsPerSvc := 32, 2, 2
-	rules, subsets, endpoints := buildTestEndpoints(t, countEps, countSvcs, countSubsetsPerSvc)
-	expectedSubsets := make([]string, countSvcs)
+	rules, subsets, expectedEps := buildTestEndpoints(t, countEps, countSvcs, countSubsetsPerSvc)
+	expectedSubsets := []string{}
 	for i := 0; i < countSvcs; i++ {
-		expectedSubsets[i] = "test-service-" + strconv.Itoa(i+1)
+		servicePrefix := "test-service-" + strconv.Itoa(i+1)
+		for _, domain := range testDomainSets[i] {
+			expectedSubsets = append(expectedSubsets, servicePrefix+"."+domain)
+		}
 	}
 	err := tm.Reconcile(expectedEps)
+	if err != nil {
+		t.Errorf("unable to reconcile(): %v", err)
+		return
+	}
 	t.Run("AfterReconcile", func(t *testing.T) {
 		if err != nil {
 			t.Error(err)
@@ -134,7 +141,7 @@ func TestMeshXDS(t *testing.T) {
 		t.Run("FetchServiceNoLabels", func(t *testing.T) {
 			t.Parallel()
 			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com"})
-			assertEqualEndpointLists(t, endpoints[0:countEps/2], actualEps)
+			assertEqualEndpointLists(t, expectedEps[0:countEps/countSvcs], actualEps)
 		})
 		t.Run("FetchNonExistentService", func(t *testing.T) {
 			t.Parallel()
@@ -153,13 +160,18 @@ func TestMeshXDS(t *testing.T) {
 		}
 		t.Run("LabeledSubset", func(t *testing.T) {
 			t.Parallel()
-			actualEps := tm.SubsetEndpoints([]string{subsets[0].Name})
-			assertEqualEndpointLists(t, endpoints[0:4], actualEps)
+			actualEps := tm.SubsetEndpoints([]string{
+				"test-service-1.default.domain-1.com|" + subsets[0].Name})
+			assertEqualEndpointLists(t, expectedEps[0:countEps/(countSvcs*countSubsetsPerSvc)], actualEps)
 		})
 		t.Run("SubsetNames", func(t *testing.T) {
 			t.Parallel()
+			for i := 0; i < countSubsetsPerSvc; i++ {
+				for _, subset := range rules[0].Subsets {
+					expectedSubsets = append(expectedSubsets, rules[0].Name+"|"+subset.Name)
+				}
+			}
 			actualSubsets := tm.SubsetNames()
-			expectedSubsets = append(expectedSubsets, "test-service-1.default.domain-1.com|"+subsets[0].Name)
 			assertEqualsSubsetNames(t, expectedSubsets, actualSubsets)
 		})
 		t.Run("SubsetEndpoints", func(t *testing.T) {
@@ -170,7 +182,7 @@ func TestMeshXDS(t *testing.T) {
 		t.Run("FetchServiceNoLabels", func(t *testing.T) {
 			t.Parallel()
 			actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com"})
-			assertEqualEndpointLists(t, endpoints[0:4], actualEps)
+			assertEqualEndpointLists(t, expectedEps[0:countEps/countSvcs], actualEps)
 		})
 		t.Run("FetchNonExistentService", func(t *testing.T) {
 			t.Parallel()
@@ -388,6 +400,9 @@ func assertEqualEndpointLists(t *testing.T, expected, actual []*Endpoint) {
 	for _, ep := range actualSet {
 		t.Errorf("unexpected endpoint found: %s", epDebugInfo(ep))
 	}
+	if len(expected) != len(actual) {
+		t.Errorf("expected endpoint count: %d do not tally with actual count: %d", len(expected), len(actual))
+	}
 }
 
 // epListDebugInfo prints out a limited set of endpoint attributes in the supplied endpoint list.
@@ -477,7 +492,8 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	}
 	maxLblValues := []int{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	currLblValues := make([]labelSpec, len(maxLblValues))
-	for idx, labelInfo := range currLblValues {
+	for idx, _ := range currLblValues {
+		labelInfo := &currLblValues[idx]
 		labelInfo.labelName = "label-" + strconv.Itoa(idx+1)
 		labelInfo.countValues = maxLblValues[idx]
 	}
@@ -486,10 +502,14 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	outRules := make([]*route.DestinationRule, cntSvcs)
 	outSubsets := make([]*route.Subset, ttlSubsets)
 	outEndpoints := make([]*Endpoint, cntEps)
-	// Assuming normal distribution.
+
+	// Assuming fixed endpoints per subsets (only for endpoint counts < 1000)
+	epsForSS := cntEps / ttlSubsets
+	// For large values of endpoint counts assume normal distribution
 	sig := -3.0
 	sigIncr := (float64)(ttlSubsets) / (float64)(cntEps) * 6.0
 	prevCdf := 0.0
+
 	epIdx := 0
 	ssIdx := 0
 	for svcIdx := 0; svcIdx < cntSvcs; svcIdx++ {
@@ -541,18 +561,22 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 				lblIdx += 2
 			}
 			// Fix the labels for this subset
-			for _, labelInfo := range currLblValues {
+			for liIdx, _ := range currLblValues {
+				labelInfo := &currLblValues[liIdx]
 				labelName := labelInfo.labelName
-				labelValue := labelName + "-" + strconv.Itoa(labelInfo.currValue+1)
-				subset.Labels[labelName] = labelName + "-" + strconv.Itoa(labelInfo.currValue+1)
+				labelInfo.currValue += 1
+				labelValue := labelName + "-" + strconv.Itoa(labelInfo.currValue)
+				subset.Labels[labelName] = labelValue
 				epLabels[lblIdx] = EndpointLabel{labelName, labelValue}
 				lblIdx++
 			}
-			// Figure out how many endpoints to add to this subset
-			sig += sigIncr
-			currCdf := math.Erfc(-sig/math.Sqrt2) / 2.0
-			epsForSS := (int)(math.Ceil((currCdf - prevCdf) * (float64)(cntEps)))
-			prevCdf = currCdf
+			// Override endpoints per subset for large values of cntEps
+			if cntEps >= 1000 {
+				sig += sigIncr
+				currCdf := math.Erfc(-sig/math.Sqrt2) / 2.0
+				epsForSS = (int)(math.Ceil((currCdf - prevCdf) * (float64)(cntEps)))
+				prevCdf = currCdf
+			}
 			for epSSIdx := 0; epSSIdx < epsForSS; epIdx, epSSIdx = epIdx+1, epSSIdx+1 {
 				// Build address of the form 10|72.1.1.1 through 10|72.254.254.254
 				addr := strconv.Itoa(firstOctet) + "." +
