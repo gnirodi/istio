@@ -103,6 +103,12 @@ type samplePoint struct {
 	endpoints int
 }
 
+type dataSet struct {
+	cntEps           int
+	cntSvcs          int
+	cntSubsetsPerSvc int
+}
+
 func TestMeshNewMesh(t *testing.T) {
 	tm := NewMesh()
 	if tm == nil {
@@ -205,6 +211,67 @@ func TestMeshXDS(t *testing.T) {
 }
 
 func BenchmarkMeshXds(b *testing.B) {
+	b.Run("SubsetEndpoints", func(b *testing.B) {
+		dataSets := []dataSet{{
+			cntEps:           20000,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 3,
+		}, {
+			cntEps:           50000,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 3,
+		}, {
+			cntEps:           100000,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 4,
+		}, {
+			cntEps:           1000000,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 10,
+		}}
+		var testRules []*route.DestinationRule
+		var testSubsets []*route.Subset
+		var testEps []*Endpoint
+		var samplePoints []samplePoint
+		var tm *Mesh
+		for _, ds := range dataSets {
+			testRules, testSubsets, testEps, samplePoints =
+				buildTestEndpoints(b, ds.cntEps, ds.cntSvcs, ds.cntSubsetsPerSvc)
+			tm = NewMesh()
+			err := tm.Reconcile(testEps)
+			if err != nil {
+				b.Error(err)
+			}
+			cntRules := len(testRules)
+			ruleChanges := make([]RuleChange, cntRules)
+			for ridx := 0; ridx < ds.cntSvcs; ridx++ {
+				ruleChanges[ridx] = RuleChange{Rule: testRules[ridx], Type: ConfigUpdate}
+			}
+			err = tm.UpdateRules(ruleChanges)
+			if err != nil {
+				b.Error(err)
+			}
+			b.ResetTimer()
+			for _, samplePoint := range samplePoints {
+				b.Run(fmt.Sprintf("EP_%d__%s__Matched_%d",
+					ds.cntEps, samplePoint.name, samplePoint.endpoints), func(b *testing.B) {
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						subset := testSubsets[samplePoint.subset]
+						subsetName := testRules[samplePoint.rule].Name + "|" + subset.Name
+						actualEps := tm.SubsetEndpoints([]string{subsetName})
+						if len(actualEps) != samplePoint.endpoints {
+							b.Errorf("actual endpoint count '%d' does not match expected '%d'",
+								len(actualEps), samplePoint.endpoints)
+						}
+					}
+				})
+			}
+		}
+	})
+}
+
+func BenchmarkMeshUpdates(b *testing.B) {
 	b.Run("Reconcile", func(b *testing.B) {
 		cntEps, cntSvcs, cntSubsetsPerSvc := 50000, 1000, 2
 		tm := NewMesh()
@@ -224,28 +291,22 @@ func BenchmarkMeshXds(b *testing.B) {
 		}
 	})
 	b.Run("UpdateRules", func(b *testing.B) {
-		type dataSet struct {
-			cntEps           int
-			cntSvcs          int
-			cntSubsetsPerSvc int
-		}
-		// Keep the largest dataset as the first!
 		dataSets := []dataSet{{
-			cntEps:           1000000,
+			cntEps:           20000,
 			cntSvcs:          1000,
-			cntSubsetsPerSvc: 10,
-		}, {
-			cntEps:           100000,
-			cntSvcs:          1000,
-			cntSubsetsPerSvc: 4,
+			cntSubsetsPerSvc: 3,
 		}, {
 			cntEps:           50000,
 			cntSvcs:          1000,
 			cntSubsetsPerSvc: 3,
 		}, {
-			cntEps:           20000,
+			cntEps:           100000,
 			cntSvcs:          1000,
-			cntSubsetsPerSvc: 3,
+			cntSubsetsPerSvc: 4,
+		}, {
+			cntEps:           1000000,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 10,
 		}}
 		var testRules []*route.DestinationRule
 		var testEps []*Endpoint
@@ -277,60 +338,6 @@ func BenchmarkMeshXds(b *testing.B) {
 		}
 	})
 }
-
-/*
-func bmMeshSubsetEndpointsHelper(b *testing.B, epsCount int, svcSpread []int) {
-	lblSpread := []int{3, 2, 7, 11, 13, 17, 19, 23, 29}
-	_, testEps, expectedFilteredEps := buildEndpoints(b, epsCount, svcSpread, lblSpread, map[string]string{
-		DestinationService.AttrName(): "test-service-1.default.domain-1.com",
-		testLabelApp:                  "app-1",
-		testLabelVer:                  "version-1",
-	})
-	expectedCount := len(expectedFilteredEps)
-	tm := NewMesh()
-	err := tm.Reconcile(testEps)
-	if err != nil {
-		b.Error(err)
-		return
-	}
-	ruleChanges := []RuleChange{{
-		Rule: &route.DestinationRule{
-			Name: "test-service-1.default.domain-1.com",
-			Subsets: []*route.Subset{&route.Subset{
-				Name: "app-1-version-1",
-				Labels: map[string]string{
-					testLabelApp: "app-1",
-					testLabelVer: "version-1",
-				},
-			}},
-		},
-		Type: ConfigAdd,
-	}}
-	err = tm.UpdateRules(ruleChanges)
-	if err != nil {
-		b.Error(err)
-		return
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
-		if len(actualEps) != len(expectedFilteredEps) {
-			b.Errorf("test failed, expected %d endpoints, found %d", expectedCount, len(actualEps))
-			return
-		}
-	}
-	// The computed benchmark should match the name!!!
-	computedBmName := fmt.Sprintf("BenchmarkMeshSubsetEndpoints_EP_%d_%d", epsCount, expectedCount)
-	if b.Name() != computedBmName {
-		b.Errorf("Actual benchmark '%s' is out of sync with computed benchmark '%s'", b.Name(), computedBmName)
-	}
-}
-func BenchmarkMeshSubsetEndpoints_EP_1000000_1617(b *testing.B) {
-	// Benchmark: Resultset 0.0067% of 1 Million endpoints
-	// Use multiples of 100 for each service spread value.
-	bmMeshSubsetEndpointsHelper(b, 1000000, []int{100, 100, 100, 100, 10000})
-}
-*/
 
 // TestMeshEndpointDeepEquals
 func TestMeshEndpointDeepEquals(t *testing.T) {
@@ -540,7 +547,6 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	sig := -3.0
 	sigIncr := 6.0 / (float64)(ttlSubsets)
 	prevCdf := 0.0
-	t.Log(sig, sigIncr, prevCdf)
 
 	epIdx := 0
 	ssIdx := 0
