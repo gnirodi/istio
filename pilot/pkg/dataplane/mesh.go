@@ -48,7 +48,7 @@
 //
 //
 // Internally Galley will use the following interfaces for
-// updating Pilot:
+// updating Pilot configuration:
 //    var routeRuleChanges []RuleChange
 //    routeRuleChanges := somePkg.FigureOutRouteRuleChanges()
 //    err := pc.UpdateRules(routeRuleChanges)
@@ -282,17 +282,25 @@ type RuleChange struct {
 	Type ConfigChangeType
 }
 
+// EndpointChange is intended for incremental updates from platform registries
 type EndpointChange struct {
+	// Endpoint the endpoint being added, deleted or updated
 	Endpoint *xdsapi.Endpoint
-	Type     ConfigChangeType
+	// Type of config change
+	Type ConfigChangeType
 }
 
+// ConfigChangeType is an enumeration for config changes, i.e add, update, delete
 type ConfigChangeType int
 
+// DestinationRuleType is an enumeration for how route.DestinationRule.Name
+// should be interpreted, i.e. service domain, short name, CIDR, etc...
 type DestinationRuleType int
 
+// SocketProtocol identifies the type of IP protocol, i.e. TCP/UDP
 type SocketProtocol int
 
+// EndpointLabel is intended for registry provided labels on Endpoints.
 type EndpointLabel struct {
 	Name  string
 	Value string
@@ -385,6 +393,8 @@ func (m *Mesh) Reconcile(endpoints []*Endpoint) error {
 	return nil
 }
 
+// ReconcileDeltas allows registies to update Meshes incrementally.
+// TODO: Needs implementation.
 func (m *Mesh) ReconcileDeltas(endpointChanges []EndpointChange) error {
 	return errors.New("unsupported interface, use Reconcile() instead")
 }
@@ -428,15 +438,13 @@ func (m *Mesh) SubsetNames() []string {
 // UpdateRules implements functionality required for pilot configuration (via Galley).
 // It updates the Mesh for supplied events, adding, updating and deleting destination
 // rules from this mesh as determined by the corresponding Event.
-// TODO: investigate if UpdateRules should be an all or nothing update and if required,
-// separate validation steps from actual changes to Mesh.
 func (m *Mesh) UpdateRules(ruleChanges []RuleChange) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	var errs error
 	for _, ruleChange := range ruleChanges {
 		rule := ruleChange.Rule
-		ruleType, labelValue, cidrNet := determineRuleScope(rule.Name)
+		ruleType, labelValue, cidrNet := determineRuleType(rule.Name)
 		for _, subset := range rule.Subsets {
 			scopedSSName := rule.Name + RuleSubsetSeparator + subset.Name
 			if ruleChange.Type == ConfigDelete || ruleChange.Type == ConfigUpdate {
@@ -479,14 +487,12 @@ func (m *Mesh) UpdateRules(ruleChanges []RuleChange) error {
 // NewEndpoint is a boiler plate function intended for platform Controllers to create a new Endpoint.
 // This method ensures all the necessary data required for creating subsets are correctly setup. It
 // also performs sorting of arrays etc, to allow stable results for reflect.DeepEquals() for quick
-// comparisons.
-// Args:
-//		address		is the network address of this endpoint that must be accessible from __THIS__
-//					Pilot, i.e. one importing the Endpoint into its Mesh via Reconcile(). If a remote
-//					exposes a gateway, the remote pilot exposes the gateway's address. The gateway
-//					itself may have more than one Endpoints behind it that are not directly
-//					network accessible from this Pilot.
-//		port		is the network port of this endpoint that must be accessible from __THIS__ pilot.
+// comparisons. The address	is the network address of this endpoint that must be accessible from __THIS__
+// Pilot, i.e. one importing the Endpoint into its Mesh via Reconcile(). If a remote exposes a gateway,
+// the remote pilot exposes the gateway's address. The gateway itself may have more than one Endpoints
+// behind it that are not directly network accessible from this Pilot. Similarly the the network port
+// of this endpoint that must be accessible from __THIS__ pilot. socketProtocol should be set to
+// TCP or UPD. Labels are properties of the workload, for example: pod labels in Kubernetes.
 func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, labels []EndpointLabel) (*Endpoint, error) {
 	var errs error
 	ipAddr := net.ParseIP(address)
@@ -568,7 +574,13 @@ func NewEndpoint(address string, port uint32, socketProtocol SocketProtocol, lab
 	return &ep, nil
 }
 
-func determineRuleScope(ruleName string) (DestinationRuleType, string, *net.IPNet) {
+// determineRuleType returns the type of destination rule, i.e. how to interpret
+// the ruleName. It returns the value to use for querying subsets, ex: for a
+// ruleName with a DNS wildcard, it returns the suffix to use for the domain.
+// For an IP address, it returns a normalized address. For CIDRs, the query
+// value is set to nil, but a IP network corresponding to the CIDR specified in
+// ruleName is returned. For all other types, the returned IP Network is nil.
+func determineRuleType(ruleName string) (DestinationRuleType, string, *net.IPNet) {
 	if strings.HasPrefix(ruleName, wildCardDomainPrefix) {
 		return DestinationRuleService, ruleName[2:], nil
 	}
@@ -586,6 +598,7 @@ func determineRuleScope(ruleName string) (DestinationRuleType, string, *net.IPNe
 	return DestinationRuleService, ruleName, nil
 }
 
+// getSingleValuedAttrs returns a map of single valued labels.
 func (ep *Endpoint) getSingleValuedAttrs() map[string]string {
 	metadataFields := ep.getIstioMetadata()
 	if metadataFields == nil {
@@ -602,6 +615,7 @@ func (ep *Endpoint) getSingleValuedAttrs() map[string]string {
 	return out
 }
 
+// getMultiValuedAttrs returns a list of values for a multi-valued label.
 func (ep *Endpoint) getMultiValuedAttrs(attrName string) []string {
 	metadataFields := ep.getIstioMetadata()
 	if metadataFields == nil {
@@ -622,7 +636,7 @@ func (ep *Endpoint) getMultiValuedAttrs(attrName string) []string {
 	return out
 }
 
-// setSingleValuedAttrs is ....?????
+// setSingleValuedAttrs sets up the endpoint with the supplied single-valued labels.
 func (ep *Endpoint) setSingleValuedAttrs(labels map[string]string) {
 	istioMeta := ep.createIstioMetadata()
 	for k, v := range labels {
@@ -643,6 +657,8 @@ func (ep *Endpoint) setMultiValuedAttrs(attrName string, attrValues []string) {
 	istioMeta[attrName] = &types.Value{&types.Value_ListValue{&types.ListValue{listValues}}}
 }
 
+// createIstioMetadata creates the internal implementation of the label store for
+// the endpoint.
 func (ep *Endpoint) createIstioMetadata() map[string]*types.Value {
 	metadata := ep.Metadata
 	if metadata == nil {
@@ -665,7 +681,8 @@ func (ep *Endpoint) createIstioMetadata() map[string]*types.Value {
 	return configLabels.Fields
 }
 
-// getIstioMetadata returns ????
+// getIstioMetadata returns the internal implementation of the label store for
+// the endpoint.
 func (ep *Endpoint) getIstioMetadata() map[string]*types.Value {
 	metadata := ep.Metadata
 	if metadata == nil {
@@ -682,9 +699,11 @@ func (ep *Endpoint) getIstioMetadata() map[string]*types.Value {
 	return configLabels.GetFields()
 }
 
-func (ep *Endpoint) matchDomainSuffix(domainPattern string) bool {
+// matchDomainSuffix returns true if any of the domains attribute for this Endpoint
+// match the domain suffix.
+func (ep *Endpoint) matchDomainSuffix(domainSuffix string) bool {
 	for _, epDomainName := range ep.getMultiValuedAttrs(DestinationDomain.AttrName()) {
-		if strings.HasSuffix(epDomainName, domainPattern) {
+		if strings.HasSuffix(epDomainName, domainSuffix) {
 			return true
 		}
 	}
@@ -854,6 +873,9 @@ func (eps endpointSet) appendAll(other endpointSet) {
 	}
 }
 
+// scopeToRule is a rule matching function used when label lookup is not possible, for example:
+// CIDRs or wild card domains. This is an expensive method, but is only used for determining
+// new subsets when Rules are updated.
 func (eps endpointSet) scopeToRule(ruleType DestinationRuleType, labelValue string, cidrNet *net.IPNet) endpointSet {
 	out := make(endpointSet, len(eps))
 	switch ruleType {

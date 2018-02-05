@@ -339,7 +339,6 @@ func BenchmarkMeshUpdates(b *testing.B) {
 	})
 }
 
-// TestMeshEndpointDeepEquals
 func TestMeshEndpointDeepEquals(t *testing.T) {
 	type epEqualsTestCase struct {
 		tcName       string // name of the test case
@@ -375,6 +374,8 @@ func TestMeshEndpointDeepEquals(t *testing.T) {
 	}
 }
 
+// assertEqualsSubsetNames asserts that the actual and expected subset names
+// match up. The arrays do not need to be in order.
 func assertEqualsSubsetNames(t *testing.T, expected, actual []string) {
 	expectedSubsets := make(map[string]bool, len(expected))
 	for _, subset := range expected {
@@ -481,6 +482,7 @@ func assertEqualEndpoints(t *testing.T, expected, actual *Endpoint) {
 	}
 }
 
+// String outputs the type of attribute change that should be made on the Endpoint.
 func (attr attrToChange) String() string {
 	switch attr {
 	case noAttrChange:
@@ -512,6 +514,9 @@ func (attr attrToChange) String() string {
 	return (string)(attr)
 }
 
+// buildTestEndpoints build a list or test destination rules, the subset definitions, the list of endpoints and a few key sample points of rules and
+// subsets. The list is predictable and can be used for guaging regressions on performance tests. The inputs are the count of desired endpoints,
+// the count of service involved and the count of subsets that need to be created for each service.
 func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]*route.DestinationRule, []*route.Subset, []*Endpoint, []samplePoint) {
 	type labelSpec struct {
 		labelName   string
@@ -653,6 +658,10 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	return outRules, outSubsets, outEndpoints, outSamplePoints[0:3]
 }
 
+// buildEndpoint builds a single endpoint. The endpoint's values are always the same, except for
+// the specified attribute if delta is not noAttrChange. If assertError is set to true, this
+// method fails the test if an error is encountered for NewEndpoint(). Otherwise the error
+// is returned.
 func buildEndpoint(t testing.TB, delta attrToChange, assertError bool) (*Endpoint, error) {
 	// Setup defaults
 	namespace := "default"
