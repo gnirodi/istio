@@ -204,25 +204,22 @@ func TestMeshXDS(t *testing.T) {
 	//		tm.reverseAttrMap, tm.reverseEpSubsets, tm.subsetEndpoints, tm.subsetDefinitions, tm.allEndpoints)
 }
 
-func runReconcileIter(b *testing.B, tm *Mesh, testEps []*Endpoint) {
-	for i := 0; i < b.N; i++ {
-		err := tm.Reconcile(testEps)
-		if err != nil {
-			b.Error(err)
-		}
-	}
-}
-
 func BenchmarkMeshXds(b *testing.B) {
 	b.Run("Reconcile", func(b *testing.B) {
 		cntEps, cntSvcs, cntSubsetsPerSvc := 50000, 1000, 2
 		tm := NewMesh()
 		_, _, testEps, _ := buildTestEndpoints(b, cntEps, cntSvcs, cntSubsetsPerSvc)
-		b.ResetTimer()
 		benchmarks := []int{1000, 5000, 10000, 25000, cntEps}
+		b.ResetTimer()
 		for _, bm := range benchmarks {
 			b.Run(fmt.Sprintf("EP_%d", bm), func(b *testing.B) {
-				runReconcileIter(b, tm, testEps[0:bm])
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					err := tm.Reconcile(testEps[0:bm])
+					if err != nil {
+						b.Error(err)
+					}
+				}
 			})
 		}
 	})
@@ -235,20 +232,20 @@ func BenchmarkMeshXds(b *testing.B) {
 		// Keep the largest dataset as the first!
 		dataSets := []dataSet{{
 			cntEps:           1000000,
-			cntSvcs:          5000,
+			cntSvcs:          1000,
 			cntSubsetsPerSvc: 10,
 		}, {
 			cntEps:           100000,
-			cntSvcs:          5000,
-			cntSubsetsPerSvc: 10,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 4,
 		}, {
 			cntEps:           50000,
-			cntSvcs:          5000,
-			cntSubsetsPerSvc: 10,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 3,
 		}, {
 			cntEps:           20000,
-			cntSvcs:          2000,
-			cntSubsetsPerSvc: 10,
+			cntSvcs:          1000,
+			cntSubsetsPerSvc: 3,
 		}}
 		var testRules []*route.DestinationRule
 		var testEps []*Endpoint
@@ -259,7 +256,7 @@ func BenchmarkMeshXds(b *testing.B) {
 			testRules, _, testEps, samplePoints =
 				buildTestEndpoints(b, ds.cntEps, ds.cntSvcs, ds.cntSubsetsPerSvc)
 			tm = NewMesh()
-			err := tm.Reconcile(testEps[0:ds.cntEps])
+			err := tm.Reconcile(testEps)
 			if err != nil {
 				b.Error(err)
 			}
@@ -533,7 +530,7 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	}, {
 		name: "2\u03c3",
 	}, {
-		name: "3\u03c3",
+		name: "3\u03c3", // This is ignored for now, because sum of long tailed can skew results
 	},
 	}
 
@@ -541,8 +538,9 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	epsForSS := cntEps / ttlSubsets
 	// For large values of endpoint counts assume normal distribution
 	sig := -3.0
-	sigIncr := (float64)(ttlSubsets) / (float64)(cntEps) * 6.0
+	sigIncr := 6.0 / (float64)(ttlSubsets)
 	prevCdf := 0.0
+	t.Log(sig, sigIncr, prevCdf)
 
 	epIdx := 0
 	ssIdx := 0
@@ -608,7 +606,7 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 			// Override endpoints per subset for large values of cntEps
 			if cntEps >= 1000 {
 				sig += sigIncr
-				currCdf := math.Erfc(-sig/math.Sqrt2) / 2.0
+				currCdf := (1 + math.Erf(sig/math.Sqrt2)) / 2.0
 				epsForSS = (int)(math.Ceil((currCdf - prevCdf) * (float64)(cntEps)))
 				if sig > -(float64)(sampleIdx) {
 					if sampleIdx >= 0 {
@@ -616,6 +614,8 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 						samplePoint.rule = svcIdx
 						samplePoint.subset = ssIdx
 						samplePoint.endpoints = epsForSS
+						// Uncomment for debugging
+						// t.Logf("name: %s, sampleIdx: %d, currentSig: %f, eps %d, currCdf %f prevCdf %f", samplePoint.name, sampleIdx, sig, epsForSS, currCdf, prevCdf)
 						sampleIdx--
 					}
 				}
@@ -643,7 +643,8 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 			}
 		}
 	}
-	return outRules, outSubsets, outEndpoints, outSamplePoints
+	// Ignore last sample point, cause sum of long tail can skew result sets
+	return outRules, outSubsets, outEndpoints, outSamplePoints[0:3]
 }
 
 func buildEndpoint(t testing.TB, delta attrToChange, assertError bool) (*Endpoint, error) {
