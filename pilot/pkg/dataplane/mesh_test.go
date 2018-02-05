@@ -96,6 +96,13 @@ var (
 // building an endpoint for testing
 type attrToChange int
 
+type samplePoint struct {
+	name      string
+	rule      int
+	subset    int
+	endpoints int
+}
+
 func TestMeshNewMesh(t *testing.T) {
 	tm := NewMesh()
 	if tm == nil {
@@ -111,7 +118,7 @@ func TestMeshXDS(t *testing.T) {
 		assertEqualEndpointLists(t, expectedEps, actual)
 	})
 	countEps, countSvcs, countSubsetsPerSvc := 32, 2, 2
-	rules, subsets, expectedEps := buildTestEndpoints(t, countEps, countSvcs, countSubsetsPerSvc)
+	rules, subsets, expectedEps, _ := buildTestEndpoints(t, countEps, countSvcs, countSubsetsPerSvc)
 	expectedSubsets := []string{}
 	for i := 0; i < countSvcs; i++ {
 		servicePrefix := "test-service-" + strconv.Itoa(i+1)
@@ -210,58 +217,71 @@ func BenchmarkMeshXds(b *testing.B) {
 	b.Run("Reconcile", func(b *testing.B) {
 		cntEps, cntSvcs, cntSubsetsPerSvc := 50000, 1000, 2
 		tm := NewMesh()
-		_, _, testEps := buildTestEndpoints(b, cntEps, cntSvcs, cntSubsetsPerSvc)
+		_, _, testEps, _ := buildTestEndpoints(b, cntEps, cntSvcs, cntSubsetsPerSvc)
 		b.ResetTimer()
 		benchmarks := []int{1000, 5000, 10000, 25000, cntEps}
 		for _, bm := range benchmarks {
-			b.Run(fmt.Sprintf("EP%d", bm), func(b *testing.B) {
+			b.Run(fmt.Sprintf("EP_%d", bm), func(b *testing.B) {
 				runReconcileIter(b, tm, testEps[0:bm])
 			})
+		}
+	})
+	b.Run("UpdateRules", func(b *testing.B) {
+		type dataSet struct {
+			cntEps           int
+			cntSvcs          int
+			cntSubsetsPerSvc int
+		}
+		// Keep the largest dataset as the first!
+		dataSets := []dataSet{{
+			cntEps:           1000000,
+			cntSvcs:          5000,
+			cntSubsetsPerSvc: 10,
+		}, {
+			cntEps:           100000,
+			cntSvcs:          5000,
+			cntSubsetsPerSvc: 10,
+		}, {
+			cntEps:           50000,
+			cntSvcs:          5000,
+			cntSubsetsPerSvc: 10,
+		}, {
+			cntEps:           20000,
+			cntSvcs:          2000,
+			cntSubsetsPerSvc: 10,
+		}}
+		var testRules []*route.DestinationRule
+		var testEps []*Endpoint
+		var samplePoints []samplePoint
+		var tm *Mesh
+
+		for _, ds := range dataSets {
+			testRules, _, testEps, samplePoints =
+				buildTestEndpoints(b, ds.cntEps, ds.cntSvcs, ds.cntSubsetsPerSvc)
+			tm = NewMesh()
+			err := tm.Reconcile(testEps[0:ds.cntEps])
+			if err != nil {
+				b.Error(err)
+			}
+			b.ResetTimer()
+			for _, samplePoint := range samplePoints {
+				b.Run(fmt.Sprintf("EP_%d__%s__Matched_%d",
+					ds.cntEps, samplePoint.name, samplePoint.endpoints), func(b *testing.B) {
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						err = tm.UpdateRules(
+							[]RuleChange{{Rule: testRules[samplePoint.rule], Type: ConfigUpdate}})
+						if err != nil {
+							b.Error(err)
+						}
+					}
+				})
+			}
 		}
 	})
 }
 
 /*
-func BenchmarkMeshUpdateRules(b *testing.B) {
-	svcSpread := []int{5, 5}    // 2 services each with 50% of endpoints
-	lblSpread := []int{3, 2, 7} // 3 labels with each with 3,2,7 values
-	_, testEps, _ := buildEndpoints(b, 1000000, svcSpread, lblSpread, map[string]string{})
-	tm := NewMesh()
-	err := tm.Reconcile(testEps)
-	if err != nil {
-		b.Error(err)
-		return
-	}
-	ruleChanges := []RuleChange{{
-		Rule: &route.DestinationRule{
-			Name: "test-service-1.default.domain-1.com",
-			Subsets: []*route.Subset{&route.Subset{
-				Name: "app-1-version-1",
-				Labels: map[string]string{
-					testLabelApp: "app-1",
-					testLabelVer: "version-1",
-				},
-			}},
-		},
-		Type: ConfigAdd,
-	}}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		err = tm.UpdateRules(ruleChanges)
-		if err != nil {
-			b.Error(err)
-			return
-		}
-		b.StopTimer()
-		actualEps := tm.SubsetEndpoints([]string{"test-service-1.default.domain-1.com|app-1-version-1"})
-		if len(actualEps) != 66667 {
-			b.Errorf("test failed, expected 500K endpoints, found %d", len(actualEps))
-			return
-		}
-		b.StartTimer()
-	}
-}
-
 func bmMeshSubsetEndpointsHelper(b *testing.B, epsCount int, svcSpread []int) {
 	lblSpread := []int{3, 2, 7, 11, 13, 17, 19, 23, 29}
 	_, testEps, expectedFilteredEps := buildEndpoints(b, epsCount, svcSpread, lblSpread, map[string]string{
@@ -488,8 +508,7 @@ func (attr attrToChange) String() string {
 	return (string)(attr)
 }
 
-func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]*route.DestinationRule,
-	[]*route.Subset, []*Endpoint) {
+func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]*route.DestinationRule, []*route.Subset, []*Endpoint, []samplePoint) {
 	type labelSpec struct {
 		labelName   string
 		countValues int
@@ -507,6 +526,16 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 	outRules := make([]*route.DestinationRule, cntSvcs)
 	outSubsets := make([]*route.Subset, ttlSubsets)
 	outEndpoints := make([]*Endpoint, cntEps)
+	outSamplePoints := []samplePoint{{
+		name: "Median",
+	}, {
+		name: "1\u03c3",
+	}, {
+		name: "2\u03c3",
+	}, {
+		name: "3\u03c3",
+	},
+	}
 
 	// Assuming fixed endpoints per subsets (only for endpoint counts < 1000)
 	epsForSS := cntEps / ttlSubsets
@@ -517,6 +546,7 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 
 	epIdx := 0
 	ssIdx := 0
+	sampleIdx := 3 // start with the furthest
 	for svcIdx := 0; svcIdx < cntSvcs; svcIdx++ {
 		serviceName := "test-service-" + strconv.Itoa(svcIdx+1)
 		domIdx := svcIdx % len(testDomainSets)
@@ -580,6 +610,15 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 				sig += sigIncr
 				currCdf := math.Erfc(-sig/math.Sqrt2) / 2.0
 				epsForSS = (int)(math.Ceil((currCdf - prevCdf) * (float64)(cntEps)))
+				if sig > -(float64)(sampleIdx) {
+					if sampleIdx >= 0 {
+						samplePoint := &outSamplePoints[sampleIdx]
+						samplePoint.rule = svcIdx
+						samplePoint.subset = ssIdx
+						samplePoint.endpoints = epsForSS
+						sampleIdx--
+					}
+				}
 				prevCdf = currCdf
 			}
 			for epSSIdx := 0; epIdx < cntEps && epSSIdx < epsForSS; epIdx, epSSIdx = epIdx+1, epSSIdx+1 {
@@ -604,7 +643,7 @@ func buildTestEndpoints(t testing.TB, cntEps, cntSvcs, cntSubsetsPerSvc int) ([]
 			}
 		}
 	}
-	return outRules, outSubsets, outEndpoints
+	return outRules, outSubsets, outEndpoints, outSamplePoints
 }
 
 func buildEndpoint(t testing.TB, delta attrToChange, assertError bool) (*Endpoint, error) {
