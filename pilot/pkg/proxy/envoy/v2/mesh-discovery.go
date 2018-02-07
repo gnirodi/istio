@@ -14,8 +14,14 @@
 
 package v2
 
-type XDS interface {
-	// SubsetEndpoints
+// MeshDiscovery allows Pilot to implement aggregation of endpoints
+// from multiple registries.
+//
+// Implementations of MeshDiscovery are required to be threadsafe.
+type MeshDiscovery interface {
+	// SubsetEndpoints implements functionality required for EDS and returns a list of endpoints that match one or more subsets.
 	SubsetEndpoints(subsetNames []string) []*Endpoint
+
+	// SubsetNames implements functionality required for CDS and returns a list of all subset names currently configured for this Mesh
 	SubsetNames() []string
 }

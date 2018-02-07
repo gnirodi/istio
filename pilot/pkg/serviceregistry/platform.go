@@ -26,4 +26,6 @@ const (
 	EurekaRegistry ServiceRegistry = "Eureka"
 	// CloudFoundryRegistry environment flag
 	CloudFoundryRegistry ServiceRegistry = "CloudFoundry"
+	// RemoteRegistry environment flag indicating Pilot communicates with other remote Istio control planes
+	RemoteRegistry ServiceRegistry = "RemoteRegistry"
 )
