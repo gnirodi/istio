@@ -16,12 +16,20 @@ package v2
 
 import (
 	"sync"
+
+	xdsapi "github.com/envoyproxy/go-control-plane/api"
+	"istio.io/istio/pilot/pkg/config/clusterregistry"
 )
 
+// PilotRegistryLocality is an enumerated type of registry locality with respect to Pilot.
+// The term locality in the context of Pilot registries indicates whether Pilot watches on
+// local endpoint events or whether Pilot depends on a remote Pilot for sending it endpoints.
 type PilotRegistryLocality int
 
 const (
+	// PilotRegistryLocal represents registries that belongs to Pilot and are locally watched for endpoint events.
 	PilotRegistryLocal PilotRegistryLocality = iota
+	// PilotRegistryRemote represent remote registries and Pilot depends on those RemotePilots to watch for endpoints local to their environment.
 	PilotRegistryRemote
 )
 
@@ -29,15 +37,29 @@ const (
 type AggregatedMesh struct {
 	// Mutex guards guarantees consistency of updates to members shared across
 	// threads.
-	mu       sync.RWMutex
-	regMap   map[string]*PilotRegistry
+	mu sync.RWMutex
+	// regMap is a collection of remote and local pilot registries mapped to their respective IDs
+	regMap map[string]*PilotRegistry
+	// regCache is the cached unmodifiable collection of regMap entries intended for multi-threaded access to the list of registries.
+	// The pointer itself is protected and should only be accessed via getRegistries(). Once the pointer is obtained, it
+	// can be safely passed around to other methods that need the list and those methods do not have to synchronize on
+	// the list.
 	regCache *[]*PilotRegistry
+	// bootstrapArgs is the initial PilotArgs used to create AggregatedMesh.
+	bootstrapArgs *clusterregistry.ClusterStore
 }
 
 type PilotRegistry interface {
 	ID() string
 	PilotLocality() PilotRegistryLocality
-	MeshDiscovery
+
+	// SubsetEndpoints implements functionality required for EDS and returns a list of endpoints
+	// that match one or more subsets.
+	SubsetEndpoints(subsetNames []string) []*Endpoint
+
+	// SubsetNames implements functionality required for CDS and returns a list of all subset names currently configured for this Mesh
+	SubsetNames() []string
+
 	MeshConfigUpdator
 }
 
@@ -51,6 +73,15 @@ type RemotePilotRegistry struct {
 	id string
 }
 
+func NewAggregatedMesh(bootstrapArgs *clusterregistry.ClusterStore) *AggregatedMesh {
+	return &AggregatedMesh{
+		mu:            sync.RWMutex{},
+		regMap:        map[string]*PilotRegistry{},
+		regCache:      &[]*PilotRegistry{},
+		bootstrapArgs: bootstrapArgs,
+	}
+}
+
 func NewLocalPilotRegistry(clusterName string) *LocalPilotRegistry {
 	return &LocalPilotRegistry{
 		id:   PilotRegistryLocal.String() + "|" + clusterName,
@@ -58,7 +89,7 @@ func NewLocalPilotRegistry(clusterName string) *LocalPilotRegistry {
 	}
 }
 
-func NewRemotePilotRegistry(pilotAddress string) *RemotePilotRegistry {
+func newRemotePilotRegistry(pilotAddress string) *RemotePilotRegistry {
 	return &RemotePilotRegistry{
 		id:   PilotRegistryRemote.String() + "|" + pilotAddress,
 		Mesh: NewMesh(),
@@ -83,28 +114,58 @@ func (am *AggregatedMesh) AddLocalRegistry(lmr LocalPilotRegistry) {
 	am.regCache = &cache
 }
 
-// SubsetEndpoints implements MeshDiscovery for the aggregated mesh
-func (am *AggregatedMesh) SubsetEndpoints(subsetNames []string) []*Endpoint {
-	var registries []*PilotRegistry = *am.registries()
-	var out []*Endpoint
-	for _, reg := range registries {
-		out = append(out, (*reg).SubsetEndpoints(subsetNames)...)
+// Endpoints implements MeshDiscovery.Endpoints().
+// In Envoy's terminology a subset is service cluster.
+func (am *AggregatedMesh) Endpoints(serviceClusters []string) []*xdsapi.LocalityLbEndpoints {
+	out := make([]*xdsapi.LocalityLbEndpoints, 0, len(serviceClusters))
+	var wg sync.WaitGroup
+	registries := *am.registries()
+	for idx, serviceCluster := range serviceClusters {
+		wg.Add(1)
+		go func(serviceCluster string, ptr **xdsapi.LocalityLbEndpoints) {
+			regEndpoints := make([][]*Endpoint, 0, len(registries))
+			totalEndpoints := 0
+			for regIdx, reg := range registries {
+				regEndpoints[regIdx] = (*reg).SubsetEndpoints([]string{serviceCluster})
+				totalEndpoints += len(regEndpoints[regIdx])
+			}
+			lbEndpoints := make([]*xdsapi.LbEndpoint, 0, totalEndpoints)
+			*ptr = &xdsapi.LocalityLbEndpoints{
+				LbEndpoints: lbEndpoints,
+			}
+			idxLbEps := 0
+			for _, epArray := range regEndpoints {
+				for _, ep := range epArray {
+					lbEndpoints[idxLbEps] = (*xdsapi.LbEndpoint)(ep)
+					idxLbEps++
+				}
+			}
+			if totalEndpoints > 0 {
+				// singleValuedAttr := (*Endpoint)(lbEndpoints[0]).getSingleValuedAttrs()
+				(*ptr).Locality = &xdsapi.Locality{
+				// TODO
+				// Region: lbEndpoints[0].singleValuedAttr[someLabel]
+				}
+			}
+			// (*ptr).Locality = ""
+		}(serviceCluster, &out[idx])
 	}
+	wg.Wait()
 	return out
 }
 
-// SubsetNames implements MeshDiscovery
-func (am *AggregatedMesh) SubsetNames() []string {
-	var registries []*PilotRegistry = *am.registries()
+// Clusters implements MeshDiscovery.Clusters().
+func (am *AggregatedMesh) Clusters() []xdsapi.Cluster {
 	subsets := map[string]bool{}
+	registries := *am.registries()
 	for _, reg := range registries {
 		for _, name := range (*reg).SubsetNames() {
 			subsets[name] = true
 		}
 	}
-	out := make([]string, 0, len(subsets))
+	out := make([]xdsapi.Cluster, 0, len(subsets))
 	for subset := range subsets {
-		out = append(out, subset)
+		out = append(out, xdsapi.Cluster{Name: subset})
 	}
 	return out
 }

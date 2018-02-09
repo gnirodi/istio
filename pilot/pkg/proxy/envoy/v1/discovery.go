@@ -35,6 +35,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"istio.io/istio/pilot/pkg/model"
+	envoyv2 "istio.io/istio/pilot/pkg/proxy/envoy/v2"
 	"istio.io/istio/pkg/log"
 	"istio.io/istio/pkg/util"
 	"istio.io/istio/pkg/version"
@@ -141,6 +142,7 @@ func init() {
 // DiscoveryService publishes services, clusters, and routes for all proxies
 type DiscoveryService struct {
 	model.Environment
+	meshDiscovery   envoyv2.MeshDiscovery
 	server          *http.Server
 	webhookClient   *http.Client
 	webhookEndpoint string
@@ -319,14 +321,15 @@ type DiscoveryServiceOptions struct {
 }
 
 // NewDiscoveryService creates an Envoy discovery service on a given port
-func NewDiscoveryService(ctl model.Controller, configCache model.ConfigStoreCache,
+func NewDiscoveryService(meshDiscovery envoyv2.MeshDiscovery, ctl model.Controller, configCache model.ConfigStoreCache,
 	environment model.Environment, o DiscoveryServiceOptions) (*DiscoveryService, error) {
 	out := &DiscoveryService{
-		Environment: environment,
-		sdsCache:    newDiscoveryCache("sds", o.EnableCaching),
-		cdsCache:    newDiscoveryCache("cds", o.EnableCaching),
-		rdsCache:    newDiscoveryCache("rds", o.EnableCaching),
-		ldsCache:    newDiscoveryCache("lds", o.EnableCaching),
+		Environment:   environment,
+		meshDiscovery: meshDiscovery,
+		sdsCache:      newDiscoveryCache("sds", o.EnableCaching),
+		cdsCache:      newDiscoveryCache("cds", o.EnableCaching),
+		rdsCache:      newDiscoveryCache("rds", o.EnableCaching),
+		ldsCache:      newDiscoveryCache("lds", o.EnableCaching),
 	}
 
 	container := restful.NewContainer()

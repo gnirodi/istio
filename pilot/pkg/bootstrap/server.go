@@ -41,6 +41,7 @@ import (
 	"istio.io/istio/pilot/pkg/model"
 	envoy "istio.io/istio/pilot/pkg/proxy/envoy/v1"
 	"istio.io/istio/pilot/pkg/proxy/envoy/v1/mock"
+	envoyv2 "istio.io/istio/pilot/pkg/proxy/envoy/v2"
 	"istio.io/istio/pilot/pkg/serviceregistry"
 	"istio.io/istio/pilot/pkg/serviceregistry/aggregate"
 	"istio.io/istio/pilot/pkg/serviceregistry/cloudfoundry"
@@ -168,7 +169,8 @@ type PilotArgs struct {
 
 // Server contains the runtime configuration for the Pilot discovery service.
 type Server struct {
-	mesh              *meshconfig.MeshConfig
+	meshConfig        *meshconfig.MeshConfig
+	mesh              *envoyv2.AggregatedMesh
 	serviceController *aggregate.Controller
 	configController  model.ConfigStoreCache
 	mixerSAN          []string
@@ -267,20 +269,20 @@ func (s *Server) initClusterRegistries(args *PilotArgs) (err error) {
 // initMesh creates the mesh in the pilotConfig from the input arguments.
 func (s *Server) initMesh(args *PilotArgs) error {
 	// If a config file was specified, use it.
-	var mesh *meshconfig.MeshConfig
+	var meshConfig *meshconfig.MeshConfig
 	if args.Mesh.ConfigFile != "" {
 		fileMesh, err := cmd.ReadMeshConfig(args.Mesh.ConfigFile)
 		if err != nil {
 			log.Warnf("failed to read mesh configuration, using default: %v", err)
 		} else {
-			mesh = fileMesh
+			meshConfig = fileMesh
 		}
 	}
 
-	if mesh == nil {
+	if meshConfig == nil {
 		// Config file either wasn't specified or failed to load - use a default mesh.
 		defaultMesh := model.DefaultMeshConfig()
-		mesh = &defaultMesh
+		meshConfig = &defaultMesh
 
 		// Allow some overrides for testing purposes.
 		if args.Mesh.MixerAddress != "" {
@@ -288,24 +290,24 @@ func (s *Server) initMesh(args *PilotArgs) error {
 			mesh.MixerReportServer = args.Mesh.MixerAddress
 		}
 		if args.Mesh.RdsRefreshDelay != nil {
-			mesh.RdsRefreshDelay = args.Mesh.RdsRefreshDelay
+			meshConfig.RdsRefreshDelay = args.Mesh.RdsRefreshDelay
 		}
 	}
 
-	log.Infof("mesh configuration %s", spew.Sdump(mesh))
+	log.Infof("mesh configuration %s", spew.Sdump(meshConfig))
 	log.Infof("version %s", version.Info.String())
 	log.Infof("flags %s", spew.Sdump(args))
 
-	s.mesh = mesh
+	s.meshConfig = meshConfig
 	return nil
 }
 
 // initMixerSan configures the mixerSAN configuration item. The mesh must already have been configured.
 func (s *Server) initMixerSan(args *PilotArgs) error {
-	if s.mesh == nil {
+	if s.meshConfig == nil {
 		return fmt.Errorf("the mesh has not been configured before configuring mixer san")
 	}
-	if s.mesh.DefaultConfig.ControlPlaneAuthPolicy == meshconfig.AuthenticationPolicy_MUTUAL_TLS {
+	if s.meshConfig.DefaultConfig.ControlPlaneAuthPolicy == meshconfig.AuthenticationPolicy_MUTUAL_TLS {
 		s.mixerSAN = envoy.GetMixerSAN(args.Config.ControllerOptions.DomainSuffix, args.Namespace)
 	}
 	return nil
@@ -414,6 +416,7 @@ func (s *Server) createK8sServiceControllers(serviceControllers *aggregate.Contr
 
 	// Add clusters under the same pilot
 	if s.clusterStore != nil {
+		s.mesh = envoyv2.NewAggregatedMesh(s.clusterStore)
 		clusters := s.clusterStore.GetPilotClusters()
 		for _, cluster := range clusters {
 			kubeconfig := clusterregistry.GetClusterAccessConfig(cluster)
@@ -481,11 +484,11 @@ func (s *Server) initServiceControllers(args *PilotArgs) error {
 			if err := s.createK8sServiceControllers(serviceControllers, args); err != nil {
 				return err
 			}
-			if s.mesh.IngressControllerMode != meshconfig.MeshConfig_OFF {
+			if s.meshConfig.IngressControllerMode != meshconfig.MeshConfig_OFF {
 				// Wrap the config controller with a cache.
 				configController, err := configaggregate.MakeCache([]model.ConfigStoreCache{
 					s.configController,
-					ingress.NewController(s.kubeClient, s.mesh, args.Config.ControllerOptions),
+					ingress.NewController(s.kubeClient, s.meshConfig, args.Config.ControllerOptions),
 				})
 				if err != nil {
 					return err
@@ -494,7 +497,7 @@ func (s *Server) initServiceControllers(args *PilotArgs) error {
 				// Update the config controller
 				s.configController = configController
 
-				if ingressSyncer, errSyncer := ingress.NewStatusSyncer(s.mesh, s.kubeClient,
+				if ingressSyncer, errSyncer := ingress.NewStatusSyncer(s.meshConfig, s.kubeClient,
 					args.Namespace, args.Config.ControllerOptions); errSyncer != nil {
 					log.Warnf("Disabled ingress status syncer due to %v", errSyncer)
 				} else {
@@ -573,7 +576,7 @@ func (s *Server) initServiceControllers(args *PilotArgs) error {
 
 func (s *Server) initDiscoveryService(args *PilotArgs) error {
 	environment := model.Environment{
-		Mesh:             s.mesh,
+		Mesh:             s.meshConfig,
 		IstioConfigStore: model.MakeIstioStore(s.configController),
 		ServiceDiscovery: s.serviceController,
 		ServiceAccounts:  s.serviceController,
@@ -582,6 +585,7 @@ func (s *Server) initDiscoveryService(args *PilotArgs) error {
 
 	// Set up discovery service
 	discovery, err := envoy.NewDiscoveryService(
+		(envoyv2.MeshDiscovery)(s.mesh),
 		s.serviceController,
 		s.configController,
 		environment,

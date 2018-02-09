@@ -14,14 +14,21 @@
 
 package v2
 
-// MeshDiscovery allows Pilot to implement aggregation of endpoints
+import (
+	xdsapi "github.com/envoyproxy/go-control-plane/api"
+)
+
+// MeshDiscovery is is the interface that adapts Envoy's v2 xDS APIs to Istio's discovery APIs
+// For Envoy terminology: https://www.envoyproxy.io/docs/envoy/latest/api-v2/api
+// For Istio terminology:
 // from multiple registries.
 //
 // Implementations of MeshDiscovery are required to be threadsafe.
 type MeshDiscovery interface {
-	// SubsetEndpoints implements functionality required for EDS and returns a list of endpoints that match one or more subsets.
-	SubsetEndpoints(subsetNames []string) []*Endpoint
+	// Endpoints implements EDS and returns a list of endpoints by subset for the list of supplied subsets.
+	// In Envoy's terminology a subset is service cluster.
+	Endpoints(serviceClusters []string) []*xdsapi.LocalityLbEndpoints
 
-	// SubsetNames implements functionality required for CDS and returns a list of all subset names currently configured for this Mesh
-	SubsetNames() []string
+	// Clusters implements functionality required for CDS and returns a list of all service clusters names currently configured for this Mesh
+	Clusters() []xdsapi.Cluster
 }
