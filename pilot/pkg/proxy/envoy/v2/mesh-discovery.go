@@ -19,6 +19,7 @@ import (
 	"errors"
 
 	xdsapi "github.com/envoyproxy/go-control-plane/api"
+	"google.golang.org/grpc"
 )
 
 // MeshDiscovery is is the interface that adapts Envoy's v2 xDS APIs to Istio's discovery APIs
@@ -37,11 +38,16 @@ type MeshDiscovery interface {
 }
 
 type DiscoveryServer struct {
-	mesh *MeshDiscovery
+	mesh       MeshDiscovery
+	grpcServer *grpc.Server
 }
 
-func NewDiscoveryServer(mesh *MeshDiscovery) *DiscoveryServer {
-	return &DiscoveryServer{mesh: mesh}
+func NewDiscoveryServer(mesh MeshDiscovery) *DiscoveryServer {
+	grpcServer := grpc.NewServer()
+	out := &DiscoveryServer{mesh: mesh, grpcServer: grpcServer}
+	xdsapi.RegisterClusterDiscoveryServiceServer(grpcServer, out)
+	xdsapi.RegisterEndpointDiscoveryServiceServer(grpcServer, out)
+	return out
 }
 
 /***************************  Mesh EDS Implementation **********************************/

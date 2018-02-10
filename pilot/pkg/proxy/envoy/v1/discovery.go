@@ -33,7 +33,6 @@ import (
 	_ "github.com/golang/glog" // TODO(nmittler): Remove this
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
-	"google.golang.org/grpc"
 	"istio.io/istio/pilot/pkg/model"
 	envoyv2 "istio.io/istio/pilot/pkg/proxy/envoy/v2"
 	"istio.io/istio/pkg/log"
@@ -142,9 +141,8 @@ func init() {
 // DiscoveryService publishes services, clusters, and routes for all proxies
 type DiscoveryService struct {
 	model.Environment
-	meshDiscovery   envoyv2.MeshDiscovery
+	serverV2        *envoyv2.DiscoveryServer
 	server          *http.Server
-	grpcServer      *grpc.Server
 	webhookClient   *http.Client
 	webhookEndpoint string
 	// TODO Profile and optimize cache eviction policy to avoid
@@ -325,12 +323,12 @@ type DiscoveryServiceOptions struct {
 func NewDiscoveryService(meshDiscovery envoyv2.MeshDiscovery, ctl model.Controller, configCache model.ConfigStoreCache,
 	environment model.Environment, o DiscoveryServiceOptions) (*DiscoveryService, error) {
 	out := &DiscoveryService{
-		Environment:   environment,
-		meshDiscovery: meshDiscovery,
-		sdsCache:      newDiscoveryCache("sds", o.EnableCaching),
-		cdsCache:      newDiscoveryCache("cds", o.EnableCaching),
-		rdsCache:      newDiscoveryCache("rds", o.EnableCaching),
-		ldsCache:      newDiscoveryCache("lds", o.EnableCaching),
+		Environment: environment,
+		serverV2:    envoyv2.NewDiscoveryServer(meshDiscovery),
+		sdsCache:    newDiscoveryCache("sds", o.EnableCaching),
+		cdsCache:    newDiscoveryCache("cds", o.EnableCaching),
+		rdsCache:    newDiscoveryCache("rds", o.EnableCaching),
+		ldsCache:    newDiscoveryCache("lds", o.EnableCaching),
 	}
 
 	container := restful.NewContainer()
@@ -346,7 +344,6 @@ func NewDiscoveryService(meshDiscovery envoyv2.MeshDiscovery, ctl model.Controll
 	out.webhookEndpoint, out.webhookClient = util.NewWebHookClient(o.WebhookEndpoint)
 
 	out.server = &http.Server{Addr: ":" + strconv.Itoa(o.Port), Handler: container}
-	out.grpcServer = grpc.NewServer()
 
 	// Flush cached discovery responses whenever services, service
 	// instances, or routing configuration changes.
