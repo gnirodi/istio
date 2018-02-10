@@ -15,6 +15,9 @@
 package v2
 
 import (
+	"context"
+	"errors"
+
 	xdsapi "github.com/envoyproxy/go-control-plane/api"
 )
 
@@ -31,4 +34,41 @@ type MeshDiscovery interface {
 
 	// Clusters implements functionality required for CDS and returns a list of all service clusters names currently configured for this Mesh
 	Clusters() []xdsapi.Cluster
+}
+
+type DiscoveryServer struct {
+	mesh *MeshDiscovery
+}
+
+func NewDiscoveryServer(mesh *MeshDiscovery) *DiscoveryServer {
+	return &DiscoveryServer{mesh: mesh}
+}
+
+/***************************  Mesh EDS Implementation **********************************/
+
+// StreamEndpoints implements xdsapi.EndpointDiscoveryServiceServer.StreamEndpoints().
+func (s *DiscoveryServer) StreamEndpoints(xdsapi.EndpointDiscoveryService_StreamEndpointsServer) error {
+	return errors.New("To be implemented")
+}
+
+// FetchEndpoints implements xdsapi.EndpointDiscoveryServiceServer.FetchEndpoints().
+func (s *DiscoveryServer) FetchEndpoints(context.Context, *xdsapi.DiscoveryRequest) (*xdsapi.DiscoveryResponse, error) {
+	return nil, errors.New("To be implemented")
+}
+
+// StreamLoadStats implements xdsapi.EndpointDiscoveryServiceServer.StreamLoadStats().
+func (s *DiscoveryServer) StreamLoadStats(xdsapi.EndpointDiscoveryService_StreamLoadStatsServer) error {
+	return errors.New("To be implemented")
+}
+
+/***************************  Mesh CDS Implementation **********************************/
+
+// StreamClusters implements xdsapi.ClusterDiscoveryServiceServer.StreamClusters().
+func (s *DiscoveryServer) StreamClusters(xdsapi.ClusterDiscoveryService_StreamClustersServer) error {
+	return errors.New("To be implemented")
+}
+
+// FetchClusters implements xdsapi.ClusterDiscoveryServiceServer.FetchClusters().
+func (s *DiscoveryServer) FetchClusters(context.Context, *xdsapi.DiscoveryRequest) (*xdsapi.DiscoveryResponse, error) {
+	return nil, errors.New("To be implemented")
 }
