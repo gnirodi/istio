@@ -405,7 +405,17 @@ func (s *Server) initConfigController(args *PilotArgs) error {
 
 // createK8sServiceControllers creates all the k8s service controllers under this pilot
 func (s *Server) createK8sServiceControllers(serviceControllers *aggregate.Controller, args *PilotArgs) (err error) {
-	kubectl := kube.NewController(s.kubeClient, args.Config.ControllerOptions)
+	// TODO: Once Multi-cloud stabilizes, we may not need to gate aggregated
+	// mesh functionality by the presence of cluster registry.
+	var localPilotRegistry *envoyv2.LocalPilotRegistry
+	var localPilotRegSleeper envoyv2.Sleeper
+	if s.clusterStore != nil {
+		localPilotRegistry = envoyv2.NewLocalPilotRegistry(s.clusterStore.GetPilotClusterName())
+		localPilotRegSleeper = (envoyv2.Sleeper)(envoyv2.NewTimedSleeper(args.Config.ControllerOptions.ResyncPeriod))
+		s.mesh.AddLocalRegistry(localPilotRegistry)
+	}
+	kubectl := kube.NewController(
+		s.kubeClient, args.Config.ControllerOptions, (envoyv2.MeshReconciler)(localPilotRegistry), (envoyv2.Sleeper)(localPilotRegSleeper))
 	serviceControllers.AddRegistry(
 		aggregate.Registry{
 			Name:             serviceregistry.ServiceRegistry(KubernetesRegistry),
@@ -416,7 +426,6 @@ func (s *Server) createK8sServiceControllers(serviceControllers *aggregate.Contr
 
 	// Add clusters under the same pilot
 	if s.clusterStore != nil {
-		s.mesh = envoyv2.NewAggregatedMesh(s.clusterStore)
 		clusters := s.clusterStore.GetPilotClusters()
 		for _, cluster := range clusters {
 			kubeconfig := clusterregistry.GetClusterAccessConfig(cluster)
@@ -427,7 +436,11 @@ func (s *Server) createK8sServiceControllers(serviceControllers *aggregate.Contr
 				err = multierror.Append(err, multierror.Prefix(kuberr, fmt.Sprintf("failed to connect to Access API with accessconfig: %s", kubeCfgFile)))
 			}
 
-			kubectl := kube.NewController(client, args.Config.ControllerOptions)
+			localClusterReg := envoyv2.NewLocalPilotRegistry(clusterregistry.GetClusterName(cluster))
+			localClusterRegSleeper := envoyv2.NewTimedSleeper(args.Config.ControllerOptions.ResyncPeriod)
+			s.mesh.AddLocalRegistry(localClusterReg)
+			kubectl := kube.NewController(
+				client, args.Config.ControllerOptions, (envoyv2.MeshReconciler)(localClusterReg), (envoyv2.Sleeper)(localClusterRegSleeper))
 			serviceControllers.AddRegistry(
 				aggregate.Registry{
 					Name:             serviceregistry.ServiceRegistry(KubernetesRegistry),
@@ -443,6 +456,11 @@ func (s *Server) createK8sServiceControllers(serviceControllers *aggregate.Contr
 
 // initServiceControllers creates and initializes the service controllers
 func (s *Server) initServiceControllers(args *PilotArgs) error {
+	// TODO: Once Multi-cloud stabilizes, we may not need to gate aggregated
+	// mesh functionality by the presence of cluster registry.
+	if s.clusterStore != nil {
+		s.mesh = envoyv2.NewAggregatedMesh(s.clusterStore)
+	}
 	serviceControllers := aggregate.NewController()
 	registered := make(map[ServiceRegistry]bool)
 	for _, r := range args.Service.Registries {

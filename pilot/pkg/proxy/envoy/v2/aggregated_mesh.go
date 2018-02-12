@@ -40,12 +40,12 @@ type AggregatedMesh struct {
 	// threads.
 	mu sync.RWMutex
 	// regMap is a collection of remote and local pilot registries mapped to their respective IDs
-	regMap map[string]*PilotRegistry
+	regMap map[string]PilotRegistry
 	// regCache is the cached unmodifiable collection of regMap entries intended for multi-threaded access to the list of registries.
 	// The pointer itself is protected and should only be accessed via getRegistries(). Once the pointer is obtained, it
 	// can be safely passed around to other methods that need the list and those methods do not have to synchronize on
 	// the list.
-	regCache *[]*PilotRegistry
+	regCache *[]PilotRegistry
 	// bootstrapArgs is the initial PilotArgs used to create AggregatedMesh.
 	bootstrapArgs *clusterregistry.ClusterStore
 }
@@ -77,8 +77,8 @@ type RemotePilotRegistry struct {
 func NewAggregatedMesh(bootstrapArgs *clusterregistry.ClusterStore) *AggregatedMesh {
 	return &AggregatedMesh{
 		mu:            sync.RWMutex{},
-		regMap:        map[string]*PilotRegistry{},
-		regCache:      &[]*PilotRegistry{},
+		regMap:        map[string]PilotRegistry{},
+		regCache:      &[]PilotRegistry{},
 		bootstrapArgs: bootstrapArgs,
 	}
 }
@@ -97,20 +97,19 @@ func newRemotePilotRegistry(pilotAddress string) *RemotePilotRegistry {
 	}
 }
 
-func (am *AggregatedMesh) registries() *[]*PilotRegistry {
+func (am *AggregatedMesh) registries() *[]PilotRegistry {
 	am.mu.RLock()
 	defer am.mu.RUnlock()
 	return am.regCache
 }
 
-func (am *AggregatedMesh) AddLocalRegistry(lmr LocalPilotRegistry) {
+func (am *AggregatedMesh) AddLocalRegistry(lmr *LocalPilotRegistry) {
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	var mr PilotRegistry = lmr
-	am.regMap[lmr.id] = &mr
-	cache := make([]*PilotRegistry, 0, len(am.regMap))
+	am.regMap[lmr.id] = lmr
+	cache := make([]PilotRegistry, 0, len(am.regMap))
 	for _, reg := range *am.registries() {
-		cache = append(cache, reg)
+		cache = append(cache, (PilotRegistry)(reg))
 	}
 	am.regCache = &cache
 }
@@ -128,7 +127,7 @@ func (am *AggregatedMesh) Endpoints(serviceClusters []string) *xdsapi.DiscoveryR
 			regEndpoints := make([][]*Endpoint, 0, len(registries))
 			totalEndpoints := 0
 			for regIdx, reg := range registries {
-				regEndpoints[regIdx] = (*reg).SubsetEndpoints([]string{serviceCluster})
+				regEndpoints[regIdx] = reg.SubsetEndpoints([]string{serviceCluster})
 				totalEndpoints += len(regEndpoints[regIdx])
 			}
 			lbEndpoints := make([]*xdsapi.LbEndpoint, 0, totalEndpoints)
@@ -161,7 +160,7 @@ func (am *AggregatedMesh) Clusters() *xdsapi.DiscoveryResponse {
 	subsets := map[string]bool{}
 	registries := *am.registries()
 	for _, reg := range registries {
-		for _, name := range (*reg).SubsetNames() {
+		for _, name := range reg.SubsetNames() {
 			subsets[name] = true
 		}
 	}

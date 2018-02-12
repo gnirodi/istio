@@ -14,6 +14,10 @@
 
 package v2
 
+import (
+	"time"
+)
+
 // MeshReconciler is used by service registry adapters to update Mesh endpoints.
 // Pilot code usually passes the MeshReconciler at the time of adapter creation.
 // Registries that do not support incremental updates, are expected to call
@@ -37,4 +41,51 @@ type MeshReconciler interface {
 	// calling ReconcileDelta and the endpoints passed to Reconcile must
 	// be created via NewEndpoint().
 	ReconcileDeltas(endpointChanges []EndpointChange) error
+}
+
+// Sleeper is intended for use by registries that poll their native data sources at regular intervals.
+// Expect Sleeper to be passed along with MeshReconciler while contructing the registry. This is typically
+// test friendly and allows for mock Sleepers to be passed during unit tests.
+type Sleeper interface {
+
+	// Sleep sleeps for a predetermined period specified during contruction of Sleeper's implementation.
+	Sleep()
+
+	// IsDone returns true if Sleeper's user needs to break the periodic cycle to Reconcile.
+	// Once IsDone() returns true, subsequent IsDone() will return false until Stop() is called, thus allowing Sleeper to be reused.
+	IsDone() bool
+
+	// Stop triggers IsDone to return true.
+	Stop()
+}
+
+// TimedSleeper is a functional implementation of Sleeper that is used by Registries.
+type TimedSleeper struct {
+	done          chan bool
+	sleepDuration time.Duration
+}
+
+// Returns a new TimedSleeper that will sleep for the supplied duration when TimedSleeper.Sleep() is invoked.
+func NewTimedSleeper(sleepDuration time.Duration) *TimedSleeper {
+	return &TimedSleeper{done: make(chan bool, 1), sleepDuration: sleepDuration}
+}
+
+// Sleep implements Sleeper.Sleep().
+func (ts *TimedSleeper) Sleep() {
+	time.Sleep(ts.sleepDuration)
+}
+
+// IsDone implements Sleeper.IsDone().
+func (ts *TimedSleeper) IsDone() bool {
+	select {
+	case <-ts.done:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsDone implements Sleeper.Stop().
+func (ts *TimedSleeper) Stop() {
+	ts.done <- true
 }

@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"istio.io/istio/pilot/pkg/model"
+	envoyv2 "istio.io/istio/pilot/pkg/proxy/envoy/v2"
 	"istio.io/istio/pkg/log"
 )
 
@@ -69,7 +70,7 @@ type cacheHandler struct {
 }
 
 // NewController creates a new Kubernetes controller
-func NewController(client kubernetes.Interface, options ControllerOptions) *Controller {
+func NewController(client kubernetes.Interface, options ControllerOptions, reconciler envoyv2.MeshReconciler, sleeper envoyv2.Sleeper) *Controller {
 	log.Infof("Service controller watching namespace %q", options.WatchedNamespace)
 
 	// Queue requires a time duration for a retry delay after a handler error
@@ -178,6 +179,9 @@ func (c *Controller) Run(stop <-chan struct{}) {
 	go c.endpoints.informer.Run(stop)
 	go c.pods.informer.Run(stop)
 	go c.nodes.informer.Run(stop)
+
+	// TODO: Placeholder for Issue #1837
+	// Depending on c.reconciler, start a thread to periodically poll c.endpoints, create envovyv2.Endpoints and call c.reconciler.Reconcile().
 
 	<-stop
 	log.Infof("Controller terminated")

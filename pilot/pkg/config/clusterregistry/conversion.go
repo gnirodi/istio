@@ -72,6 +72,14 @@ func (cs *ClusterStore) GetPilotAccessConfig() string {
 	return cs.cfgStore.ObjectMeta.Annotations[ClusterAccessConfigFile]
 }
 
+// GetPilotClusterName returns Pilot's cluster name.
+func (cs *ClusterStore) GetPilotClusterName() string {
+	if cs.cfgStore == nil {
+		return ""
+	}
+	return cs.cfgStore.ObjectMeta.Name
+}
+
 // GetClusterAccessConfig returns the access config file of a cluster
 func GetClusterAccessConfig(cluster *k8s_cr.Cluster) string {
 	if cluster == nil {
