@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	xdsapi "github.com/envoyproxy/go-control-plane/api"
+	"github.com/gogo/protobuf/types"
 	"istio.io/istio/pilot/pkg/config/clusterregistry"
 )
 
@@ -116,13 +117,14 @@ func (am *AggregatedMesh) AddLocalRegistry(lmr LocalPilotRegistry) {
 
 // Endpoints implements MeshDiscovery.Endpoints().
 // In Envoy's terminology a subset is service cluster.
-func (am *AggregatedMesh) Endpoints(serviceClusters []string) []*xdsapi.LocalityLbEndpoints {
-	out := make([]*xdsapi.LocalityLbEndpoints, 0, len(serviceClusters))
+func (am *AggregatedMesh) Endpoints(serviceClusters []string) *xdsapi.DiscoveryResponse {
+	out := &xdsapi.DiscoveryResponse{}
+	out.Resources = make([]*types.Any, 0, len(serviceClusters))
 	var wg sync.WaitGroup
 	registries := *am.registries()
 	for idx, serviceCluster := range serviceClusters {
 		wg.Add(1)
-		go func(serviceCluster string, ptr **xdsapi.LocalityLbEndpoints) {
+		go func(serviceCluster string, ptr **types.Any) {
 			regEndpoints := make([][]*Endpoint, 0, len(registries))
 			totalEndpoints := 0
 			for regIdx, reg := range registries {
@@ -130,9 +132,6 @@ func (am *AggregatedMesh) Endpoints(serviceClusters []string) []*xdsapi.Locality
 				totalEndpoints += len(regEndpoints[regIdx])
 			}
 			lbEndpoints := make([]*xdsapi.LbEndpoint, 0, totalEndpoints)
-			*ptr = &xdsapi.LocalityLbEndpoints{
-				LbEndpoints: lbEndpoints,
-			}
 			idxLbEps := 0
 			for _, epArray := range regEndpoints {
 				for _, ep := range epArray {
@@ -140,22 +139,25 @@ func (am *AggregatedMesh) Endpoints(serviceClusters []string) []*xdsapi.Locality
 					idxLbEps++
 				}
 			}
+			resource := xdsapi.LocalityLbEndpoints{
+				LbEndpoints: lbEndpoints,
+			}
 			if totalEndpoints > 0 {
 				// singleValuedAttr := (*Endpoint)(lbEndpoints[0]).getSingleValuedAttrs()
-				(*ptr).Locality = &xdsapi.Locality{
+				resource.Locality = &xdsapi.Locality{
 				// TODO
 				// Region: lbEndpoints[0].singleValuedAttr[someLabel]
 				}
 			}
-			// (*ptr).Locality = ""
-		}(serviceCluster, &out[idx])
+			*ptr, _ = types.MarshalAny(&resource)
+		}(serviceCluster, &out.Resources[idx])
 	}
 	wg.Wait()
 	return out
 }
 
 // Clusters implements MeshDiscovery.Clusters().
-func (am *AggregatedMesh) Clusters() []xdsapi.Cluster {
+func (am *AggregatedMesh) Clusters() *xdsapi.DiscoveryResponse {
 	subsets := map[string]bool{}
 	registries := *am.registries()
 	for _, reg := range registries {
@@ -163,9 +165,11 @@ func (am *AggregatedMesh) Clusters() []xdsapi.Cluster {
 			subsets[name] = true
 		}
 	}
-	out := make([]xdsapi.Cluster, 0, len(subsets))
+	out := &xdsapi.DiscoveryResponse{}
+	out.Resources = make([]*types.Any, 0, len(subsets))
 	for subset := range subsets {
-		out = append(out, xdsapi.Cluster{Name: subset})
+		resource, _ := types.MarshalAny(&xdsapi.Cluster{Name: subset})
+		out.Resources = append(out.Resources, resource)
 	}
 	return out
 }

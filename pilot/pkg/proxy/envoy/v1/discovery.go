@@ -344,6 +344,7 @@ func NewDiscoveryService(meshDiscovery envoyv2.MeshDiscovery, ctl model.Controll
 	out.webhookEndpoint, out.webhookClient = util.NewWebHookClient(o.WebhookEndpoint)
 
 	out.server = &http.Server{Addr: ":" + strconv.Itoa(o.Port), Handler: container}
+	out.serverV2.ChainHandlers(out.server)
 
 	// Flush cached discovery responses whenever services, service
 	// instances, or routing configuration changes.
